@@ -55,7 +55,8 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL, "http://localhost:3000"],
+    allow_origins=[FRONTEND_URL, "http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003"],
+    allow_origin_regex=r"http://localhost:\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -142,43 +143,27 @@ def get_risk_level(probability: float) -> str:
         return "High"
 
 def get_suggested_action(probability: float, features: dict) -> str:
-    """Provide suggested action based on denial probability and features"""
+    """Provide a simple, patient-friendly suggested action based on denial probability and features"""
     coding_score = features.get('coding_accuracy_score', 0)
     delay_days = features.get('claim_submission_delay_days', 0)
     documentation = features.get('documentation_complete', '')
-    
-    actions = []
-    
-    if coding_score < 0.7:
-        actions.append("Review medical coding")
-    
-    if delay_days > 5:
-        actions.append("Submit claims earlier")
-    
-    if documentation.lower() == 'no':
-        actions.append("Upload missing documents")
-    
+
     if probability >= 0.67:
-        actions.append("Review with prior authorization team")
-    
-    if probability >= 0.5:
-        actions.append("Verify all requirements met")
-    
-    if not actions:
-        actions.append("Claim appears compliant")
-    
-    return " | ".join(actions)
+        return "Your claim has a high chance of being denied. Please fix the issues listed below before submitting."
+    elif probability >= 0.33:
+        if str(documentation).lower() == 'no':
+            return "Your claim is missing some documents. Upload them and recheck before submitting."
+        if coding_score < 0.7:
+            return "Your medical codes may not match. Ask your billing team to review the codes before submitting."
+        if delay_days > 5:
+            return "Your claim is being submitted late. Submit sooner next time to avoid rejection."
+        return "Your claim looks mostly fine but needs a quick review before submitting."
+    else:
+        return "Your claim looks good! You can go ahead and submit it."
 
 
 def get_rule_based_recommendations(features: dict) -> List[str]:
-    """
-    Rule-based recommendations for denial prevention based on business rules:
-
-    - If prior_authorization = 'no' and insurance_type = 'Private' → "Verify prior authorization"
-    - If documentation_complete = 'no' → "Upload missing documents"
-    - If coding_accuracy_score < 0.6 → "Review medical coding"
-    - If claim_submission_delay_days > 5 → "Submit claims earlier"
-    """
+    """Simple, patient-friendly rule-based recommendations for denial prevention"""
     recommendations: List[str] = []
 
     prior_auth = str(features.get("prior_authorization", "")).lower()
@@ -186,18 +171,29 @@ def get_rule_based_recommendations(features: dict) -> List[str]:
     documentation_complete = str(features.get("documentation_complete", "")).lower()
     coding_score = float(features.get("coding_accuracy_score", 0.0))
     delay_days = int(features.get("claim_submission_delay_days", 0))
+    claim_amount = float(features.get("claim_amount", 0))
 
     if prior_auth == "no" and insurance_type == "private":
-        recommendations.append("Verify prior authorization")
+        recommendations.append("✅ Get Prior Approval — Call your insurer and get a prior authorization number before submitting.")
 
     if documentation_complete == "no":
-        recommendations.append("Upload missing documents")
+        recommendations.append("📄 Upload Missing Documents — Attach doctor's notes or test reports before submitting.")
 
     if coding_score < 0.6:
-        recommendations.append("Review medical coding")
+        recommendations.append("🔬 Fix Medical Codes — The procedure and diagnosis codes don't match. Ask your billing staff to fix them.")
+    elif coding_score < 0.75:
+        recommendations.append("🔬 Review Coding — Ask your coder to verify the procedure matches the diagnosis.")
 
-    if delay_days > 5:
-        recommendations.append("Submit claims earlier")
+    if delay_days > 10:
+        recommendations.append("⏱️ Submit Faster — Your claim is very late. Most insurers reject claims after 90 days.")
+    elif delay_days > 5:
+        recommendations.append("⏱️ Reduce Delay — Submit within 5 days of treatment to reduce rejection risk.")
+
+    if claim_amount > 50000:
+        recommendations.append("💰 Large Claim — High-value claims get extra scrutiny. Ensure all documents and codes are correct.")
+
+    if not recommendations:
+        recommendations.append("✅ Everything Looks Good — No issues found. You can submit this claim.")
 
     return recommendations
 
@@ -590,29 +586,11 @@ def get_history(limit: int = 20):
 
 if __name__ == "__main__":
     import uvicorn
-    
-    # Function to find a free port starting from port 8000
-    def find_free_port(start_port=8000):
-        """Find the first available port starting from start_port"""
-        for port in range(start_port, start_port + 100):
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                sock.bind(('0.0.0.0', port))
-                sock.close()
-                return port
-            except OSError:
-                continue
-        raise RuntimeError(f"No free ports available in range {start_port}-{start_port+100}")
-    
-    # Find a free port
-    port = find_free_port(8000)
-    
+    port = int(os.getenv("PORT", 8000))
     print("\n" + "="*60)
     print("[STARTUP] Starting Claim Denial Prediction API...")
     print(f"[INFO] Using Port: {port}")
     print(f"[INFO] Dashboard: http://localhost:{port}")
     print(f"[INFO] API Docs: http://localhost:{port}/docs")
     print("="*60 + "\n")
-    
     uvicorn.run(app, host="0.0.0.0", port=port)

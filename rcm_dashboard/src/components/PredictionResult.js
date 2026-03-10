@@ -155,6 +155,31 @@ const PredictionResult = ({ prediction }) => {
           </div>
         </div>
 
+        {/* FIX STEPS */}
+        {prediction.rule_based_recommendations?.length > 0 && (
+          <div className="pr-card" style={{ border: '1px solid rgba(34,211,238,0.15)' }}>
+            <p style={{ color: '#E2E8F0', fontWeight: 800, fontSize: 14, marginBottom: 14 }}>
+              🔧 Steps to Fix Your Claim
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {prediction.rule_based_recommendations.map((rec, i) => {
+                const isGood = rec.startsWith('✅ Everything');
+                return (
+                  <div key={i} style={{
+                    background: isGood ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.04)',
+                    border: isGood ? '1px solid rgba(34,197,94,0.25)' : '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 12, padding: '12px 16px',
+                  }}>
+                    <p style={{ color: isGood ? '#4ADE80' : '#E2E8F0', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+                      {rec}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* STATUS STRIP */}
         <div className="pr-3col">
           {[

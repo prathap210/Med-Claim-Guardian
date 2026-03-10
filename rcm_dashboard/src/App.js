@@ -20,62 +20,73 @@ function App() {
   const [activeTab, setActiveTab] = useState('predict');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // Sample analytics data - in a real app, this would come from the backend
+  // Fallback mock data used only if real API is unavailable
+  const MOCK_RECENT_PREDICTIONS = [
+    { id: 1,  payer: 'Star Health',               amount: 5000,  risk: 'Low',    probability: 0.18 },
+    { id: 2,  payer: 'ICICI Lombard',             amount: 25000, risk: 'High',   probability: 0.72 },
+    { id: 3,  payer: 'HDFC ERGO',                 amount: 12000, risk: 'Medium', probability: 0.51 },
+    { id: 4,  payer: 'Bajaj Allianz',             amount: 45000, risk: 'Medium', probability: 0.58 },
+    { id: 5,  payer: 'New India Assurance',       amount: 8000,  risk: 'Low',    probability: 0.25 },
+    { id: 6,  payer: 'United India Insurance',    amount: 15000, risk: 'Medium', probability: 0.53 },
+    { id: 7,  payer: 'Oriental Insurance',        amount: 9500,  risk: 'Medium', probability: 0.47 },
+    { id: 8,  payer: 'National Insurance',        amount: 22000, risk: 'Medium', probability: 0.49 },
+    { id: 9,  payer: 'Niva Bupa',                 amount: 18000, risk: 'Low',    probability: 0.21 },
+    { id: 10, payer: 'Care Health Insurance',     amount: 11000, risk: 'Low',    probability: 0.24 },
+    { id: 11, payer: 'Tata AIG',                  amount: 33000, risk: 'High',   probability: 0.68 },
+    { id: 12, payer: 'SBI General Insurance',     amount: 7500,  risk: 'Medium', probability: 0.46 },
+    { id: 13, payer: 'Manipal Cigna Health',      amount: 14000, risk: 'Low',    probability: 0.19 },
+    { id: 14, payer: 'Reliance Health Insurance', amount: 29000, risk: 'Medium', probability: 0.55 },
+  ];
+
+  // Load real analytics from the backend; fall back to mock data if unavailable
   useEffect(() => {
-    const mockAnalytics = {
-      denialsByPayer: {
-        'Star Health':            0.22,
-        'HDFC ERGO':              0.28,
-        'ICICI Lombard':          0.35,
-        'Bajaj Allianz':          0.18,
-        'New India Assurance':    0.25,
-        'United India Insurance': 0.31,
-        'Oriental Insurance':     0.27,
-        'National Insurance':     0.29,
-        'Niva Bupa':              0.21,
-        'Care Health Insurance':  0.24,
-        'Tata AIG':               0.33,
-        'SBI General Insurance':  0.26,
-        'Manipal Cigna Health':   0.19,
-        'Reliance Health Insurance': 0.30,
-      },
-      denialsByProcedure: {
-        'PROC_A': 0.15,
-        'PROC_B': 0.28,
-        'PROC_C': 0.35,
-        'PROC_D': 0.42,
-        'PROC_E': 0.38,
-      },
-      denialsByProvider: {
-        'Hospital':           0.21,
-        'Specialist':         0.34,
-        'Clinic':             0.27,
-        'Diagnostic Center':  0.41,
-      },
-      riskDistribution: {
-        'Low': 3307,
-        'Medium': 1200,
-        'High': 493,
-      },
-      recentPredictions: [
-        { id: 1,  payer: 'Star Health',               amount: 5000,  risk: 'Low',    probability: 0.18 },
-        { id: 2,  payer: 'ICICI Lombard',             amount: 25000, risk: 'High',   probability: 0.72 },
-        { id: 3,  payer: 'HDFC ERGO',                 amount: 12000, risk: 'Medium', probability: 0.51 },
-        { id: 4,  payer: 'Bajaj Allianz',             amount: 45000, risk: 'Medium', probability: 0.58 },
-        { id: 5,  payer: 'New India Assurance',       amount: 8000,  risk: 'Low',    probability: 0.25 },
-        { id: 6,  payer: 'United India Insurance',    amount: 15000, risk: 'Medium', probability: 0.53 },
-        { id: 7,  payer: 'Oriental Insurance',        amount: 9500,  risk: 'Medium', probability: 0.47 },
-        { id: 8,  payer: 'National Insurance',        amount: 22000, risk: 'Medium', probability: 0.49 },
-        { id: 9,  payer: 'Niva Bupa',                 amount: 18000, risk: 'Low',    probability: 0.21 },
-        { id: 10, payer: 'Care Health Insurance',     amount: 11000, risk: 'Low',    probability: 0.24 },
-        { id: 11, payer: 'Tata AIG',                  amount: 33000, risk: 'High',   probability: 0.68 },
-        { id: 12, payer: 'SBI General Insurance',     amount: 7500,  risk: 'Medium', probability: 0.46 },
-        { id: 13, payer: 'Manipal Cigna Health',      amount: 14000, risk: 'Low',    probability: 0.19 },
-        { id: 14, payer: 'Reliance Health Insurance', amount: 29000, risk: 'Medium', probability: 0.55 },
-      ]
+    const fetchAnalytics = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/analytics`);
+        const real = response.data;
+
+        // Transform backend format → component format
+        const denialsByPayer = {};
+        (real.denial_by_payer || []).forEach(d => { denialsByPayer[d.payer] = d.denial_rate; });
+
+        const denialsByProcedure = {};
+        (real.top_procedures_by_denial || []).forEach(d => { denialsByProcedure[d.procedure_code] = d.denial_rate; });
+
+        const denialsByProvider = {};
+        (real.denial_by_provider_type || []).forEach(d => { denialsByProvider[d.provider_type] = d.denial_rate; });
+
+        const stats = real.overall_statistics || {};
+        const approved = stats.approved_claims || 3307;
+        const denied   = stats.denied_claims   || 1693;
+        const riskDistribution = {
+          'Low':    Math.round(approved * 0.66),
+          'Medium': Math.round(approved * 0.34),
+          'High':   denied,
+        };
+
+        setAnalytics({
+          denialsByPayer,
+          denialsByProcedure,
+          denialsByProvider,
+          riskDistribution,
+          recentPredictions: MOCK_RECENT_PREDICTIONS,
+        });
+      } catch (err) {
+        // Fallback to static mock data if backend is unreachable
+        setAnalytics({
+          denialsByPayer: {
+            'Star Health': 0.22, 'HDFC ERGO': 0.28, 'ICICI Lombard': 0.35,
+            'Bajaj Allianz': 0.18, 'New India Assurance': 0.25,
+          },
+          denialsByProcedure: { 'PROC_A': 0.32, 'PROC_B': 0.36, 'PROC_C': 0.34, 'PROC_D': 0.40, 'PROC_E': 0.39 },
+          denialsByProvider: { 'Hospital': 0.35, 'Specialist': 0.33, 'Clinic': 0.34, 'Diagnostic Center': 0.34 },
+          riskDistribution: { 'Low': 2181, 'Medium': 1126, 'High': 1693 },
+          recentPredictions: MOCK_RECENT_PREDICTIONS,
+        });
+      }
     };
-    setAnalytics(mockAnalytics);
-  }, []);
+    fetchAnalytics();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (formData) => {
     setLoading(true);

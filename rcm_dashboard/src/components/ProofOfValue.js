@@ -4,8 +4,8 @@ import axios from 'axios';
 const API_URL = 'http://localhost:8000';
 
 function ProofOfValue() {
-  const [metrics, setMetrics] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [metrics, setMetrics] = useState(null); // eslint-disable-line no-unused-vars
+  const [loading, setLoading] = useState(false); // eslint-disable-line no-unused-vars
 
   useEffect(() => {
     fetchMetrics();

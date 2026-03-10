@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const CATEGORICAL_OPTIONS = {
-  insurance_type: ['Private', 'Medicaid', 'Medicare', 'UnitedHealthcare', 'Blue Cross Blue Shield', 'Aetna', 'Cigna', 'Humana', 'Molina Healthcare', 'Centene'],
+  insurance_type: ['Private', 'Medicaid', 'Medicare'],
   procedure_code: ['PROC_A', 'PROC_B', 'PROC_C', 'PROC_D', 'PROC_E'],
   diagnosis_code: ['DX1', 'DX2', 'DX3', 'DX4', 'DX5'],
   provider_type: ['Hospital', 'Specialist', 'Clinic', 'Diagnostic Center'],
