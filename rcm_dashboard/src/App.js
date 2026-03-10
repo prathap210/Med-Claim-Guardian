@@ -46,6 +46,12 @@ function App() {
         'PROC_D': 0.42,
         'PROC_E': 0.38,
       },
+      denialsByProvider: {
+        'Hospital':           0.21,
+        'Specialist':         0.34,
+        'Clinic':             0.27,
+        'Diagnostic Center':  0.41,
+      },
       riskDistribution: {
         'Low': 3307,
         'Medium': 1200,

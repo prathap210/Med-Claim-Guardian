@@ -83,6 +83,35 @@ const DenialAnalytics = ({ data, analytics }) => {
     ],
   };
 
+  // Denial by provider
+  const providerChartData = {
+    labels: Object.keys(resolvedData.denialsByProvider || {
+      'Hospital': 0.21, 'Specialist': 0.34, 'Clinic': 0.27, 'Diagnostic Center': 0.41,
+    }),
+    datasets: [
+      {
+        label: 'Denial Rate (%)',
+        data: Object.values(resolvedData.denialsByProvider || {
+          'Hospital': 0.21, 'Specialist': 0.34, 'Clinic': 0.27, 'Diagnostic Center': 0.41,
+        }).map((v) => v * 100),
+        backgroundColor: [
+          'rgba(34,197,94,0.6)',
+          'rgba(249,115,22,0.6)',
+          'rgba(59,130,246,0.6)',
+          'rgba(239,68,68,0.6)',
+        ],
+        borderColor: [
+          'rgba(34,197,94,1)',
+          'rgba(249,115,22,1)',
+          'rgba(59,130,246,1)',
+          'rgba(239,68,68,1)',
+        ],
+        borderWidth: 2,
+        borderRadius: 6,
+      },
+    ],
+  };
+
   // Risk distribution
   const riskDistributionData = {
     labels: Object.keys(resolvedData.riskDistribution),
@@ -244,6 +273,81 @@ const DenialAnalytics = ({ data, analytics }) => {
             <h3 className="text-lg font-bold text-cyan-300">Risk Distribution</h3>
           </div>
           <Doughnut data={riskDistributionData} options={chartOptions} height={300} />
+        </div>
+      </div>
+
+      {/* Provider Chart — full width row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="group backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6 hover:border-white/40 transition-all duration-300 hover:shadow-lg hover:shadow-white/10 hover:bg-white/[0.12]">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">🏢</span>
+            <h3 className="text-lg font-bold text-cyan-300">Denial by Provider Type</h3>
+          </div>
+          <p className="text-xs text-white/50 mb-4">Denial rate breakdown across healthcare provider categories</p>
+          <Bar data={providerChartData} options={{
+            ...chartOptions,
+            plugins: {
+              ...chartOptions.plugins,
+              legend: { display: false },
+            },
+            scales: {
+              ...chartOptions.scales,
+              y: {
+                ...chartOptions.scales.y,
+                max: 60,
+                ticks: {
+                  ...chartOptions.scales.y.ticks,
+                  callback: (v) => v + '%',
+                },
+              },
+            },
+          }} height={220} />
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            {Object.entries(resolvedData.denialsByProvider || { 'Hospital': 0.21, 'Specialist': 0.34, 'Clinic': 0.27, 'Diagnostic Center': 0.41 }).map(([provider, rate]) => (
+              <div key={provider} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                <span className="text-xs text-white/70">{provider}</span>
+                <span className={`text-xs font-bold ${
+                  rate < 0.25 ? 'text-green-300' : rate < 0.35 ? 'text-amber-300' : 'text-red-300'
+                }`}>{(rate * 100).toFixed(0)}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Provider insight card */}
+        <div className="group backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6 hover:border-white/40 transition-all duration-300 hover:shadow-lg hover:shadow-white/10 hover:bg-white/[0.12]">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">💡</span>
+            <h3 className="text-lg font-bold text-cyan-300">Provider Insights</h3>
+          </div>
+          <p className="text-xs text-white/50 mb-5">Key observations from provider-level denial analysis</p>
+          <div className="space-y-4">
+            {[
+              { icon: '🏥', label: 'Hospitals', rate: 0.21, note: 'Lowest denial rate — strong documentation compliance' },
+              { icon: '🔬', label: 'Specialists', rate: 0.34, note: 'Higher denials due to complex procedure coding' },
+              { icon: '🏪', label: 'Clinics', rate: 0.27, note: 'Moderate — often missing prior authorization' },
+              { icon: '🧪', label: 'Diagnostic Centers', rate: 0.41, note: 'Highest risk — frequent diagnosis-procedure mismatches' },
+            ].map(({ icon, label, rate, note }) => (
+              <div key={label} className="flex items-start gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+                <span className="text-2xl">{icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-semibold text-white/90">{label}</span>
+                    <span className={`text-sm font-bold ${
+                      rate < 0.25 ? 'text-green-300' : rate < 0.35 ? 'text-amber-300' : 'text-red-300'
+                    }`}>{(rate * 100).toFixed(0)}% denial</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-white/10 rounded-full mb-1.5">
+                    <div className="h-full rounded-full transition-all duration-500" style={{
+                      width: `${rate * 100}%`,
+                      background: rate < 0.25 ? '#22d3ee' : rate < 0.35 ? '#f59e0b' : '#ef4444',
+                    }} />
+                  </div>
+                  <p className="text-xs text-white/50">{note}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
