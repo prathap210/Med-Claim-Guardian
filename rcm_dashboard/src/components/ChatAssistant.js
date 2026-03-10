@@ -140,7 +140,7 @@ function ChatAssistant({ onBack }) {
   const handleSubmit = (e) => { e.preventDefault(); sendMessage(inputValue); };
 
   const applyBold = (str) => str.split(/\*\*(.*?)\*\*/g).map((p, j) =>
-    j % 2 === 1 ? <strong key={j} style={{ color: '#22d3ee' }}>{p}</strong> : p
+    j % 2 === 1 ? <strong key={j} style={{ color: '#0F4C81' }}>{p}</strong> : p
   );
 
   const fmtText = (text) => text.split('\n').map((line, i) => {
@@ -148,63 +148,63 @@ function ChatAssistant({ onBack }) {
     if (/^\d+\. /.test(line)) {
       const num = line.match(/^\d+/)[0];
       const rest = line.replace(/^\d+\. /, '');
-      return <div key={i} style={{ display:'flex', gap:8, marginBottom:3 }}><span style={{color:'#22d3ee',minWidth:16,flexShrink:0}}>{num}.</span><span>{applyBold(rest)}</span></div>;
+      return <div key={i} style={{ display:'flex', gap:8, marginBottom:3 }}><span style={{color:'#0F4C81',minWidth:16,flexShrink:0,fontWeight:700}}>{num}.</span><span>{applyBold(rest)}</span></div>;
     }
-    if (line.startsWith('• ')) return <div key={i} style={{ display:'flex', gap:8, marginBottom:2 }}><span style={{color:'#94a3b8',flexShrink:0}}>•</span><span>{applyBold(line.slice(2))}</span></div>;
+    if (line.startsWith('• ')) return <div key={i} style={{ display:'flex', gap:8, marginBottom:2 }}><span style={{color:'#008BA3',flexShrink:0}}>•</span><span>{applyBold(line.slice(2))}</span></div>;
     return <div key={i} style={{ marginBottom: 2 }}>{applyBold(line)}</div>;
   });
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100vh', backgroundColor:'#0f172a', overflow:'hidden' }}>
+    <div style={{ display:'flex', flexDirection:'column', height:'100vh', backgroundColor:'#ffffff', overflow:'hidden' }}>
 
       {/* Header */}
-      <div style={{ backgroundColor:'#0f172a', borderBottom:'1px solid #22d3ee44', padding:'14px 20px', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+      <div style={{ backgroundColor:'#ffffff', borderBottom:'1px solid #0F4C81', padding:'14px 20px', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-          <div style={{ width:40, height:40, borderRadius:10, background:'linear-gradient(135deg,#06b6d4,#3b82f6)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>AI</div>
+          <div style={{ width:40, height:40, borderRadius:10, background:'linear-gradient(135deg,#0F4C81,#008BA3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, color:'#ffffff', fontWeight:700 }}>AI</div>
           <div>
-            <div style={{ color:'#22d3ee', fontWeight:700, fontSize:16 }}>Med-Claim Guardian Assistant</div>
-            <div style={{ color:'#475569', fontSize:12, marginTop:2 }}>
-              <span style={{ display:'inline-block', width:7, height:7, backgroundColor:'#22c55e', borderRadius:'50%', marginRight:5, verticalAlign:'middle' }} />
+            <div style={{ color:'#0F4C81', fontWeight:700, fontSize:16 }}>Med-Claim Guardian Assistant</div>
+            <div style={{ color:'#6b7280', fontSize:12, marginTop:2 }}>
+              <span style={{ display:'inline-block', width:7, height:7, backgroundColor:'#10b981', borderRadius:'50%', marginRight:5, verticalAlign:'middle' }} />
               Online · Ask me anything about healthcare claims
             </div>
           </div>
         </div>
         {onBack && (
-          <button onClick={onBack} style={{ backgroundColor:'#1e293b', border:'1px solid #334155', color:'#94a3b8', padding:'8px 16px', borderRadius:8, cursor:'pointer', fontSize:13, fontWeight:600 }}>
+          <button onClick={onBack} style={{ backgroundColor:'#f3f4f6', border:'1px solid #d1d5db', color:'#4b5563', padding:'8px 16px', borderRadius:8, cursor:'pointer', fontSize:13, fontWeight:600 }}>
             Back to Dashboard
           </button>
         )}
       </div>
 
       {/* Messages */}
-      <div style={{ flex:1, overflowY:'auto', padding:'16px', display:'flex', flexDirection:'column', gap:10 }}>
+      <div style={{ flex:1, overflowY:'auto', padding:'16px', display:'flex', flexDirection:'column', gap:10, backgroundColor:'#f9fafb' }}>
         {messages.map(msg => (
           <div key={msg.id} style={{ display:'flex', justifyContent: msg.sender==='user'?'flex-end':'flex-start', alignItems:'flex-end', gap:8 }}>
             {msg.sender === 'bot' && (
-              <div style={{ width:28, height:28, borderRadius:'50%', background:'linear-gradient(135deg,#06b6d4,#3b82f6)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'#fff', fontWeight:700, flexShrink:0 }}>AI</div>
+              <div style={{ width:28, height:28, borderRadius:'50%', background:'linear-gradient(135deg,#0F4C81,#008BA3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'#fff', fontWeight:700, flexShrink:0 }}>AI</div>
             )}
             <div style={{
               maxWidth:'70%',
-              backgroundColor: msg.sender==='user' ? '#2563eb' : '#1e293b',
-              border: msg.sender==='bot' ? '1px solid #22d3ee33' : 'none',
+              backgroundColor: msg.sender==='user' ? '#0F4C81' : '#ffffff',
+              border: msg.sender==='bot' ? '1px solid #d1d5db' : 'none',
               borderRadius: msg.sender==='user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-              padding:'11px 15px', color:'#e2e8f0', fontSize:13.5, lineHeight:1.6,
+              padding:'11px 15px', color: msg.sender==='user'?'#ffffff':'#374151', fontSize:13.5, lineHeight:1.6, boxShadow: msg.sender==='bot'?'0 1px 2px rgba(0,0,0,0.05)':'none'
             }}>
               {fmtText(msg.text)}
-              <div style={{ fontSize:10, color: msg.sender==='user'?'#93c5fd':'#475569', marginTop:5, textAlign:'right' }}>
+              <div style={{ fontSize:10, color: msg.sender==='user'?'#d1d5db':'#9ca3af', marginTop:5, textAlign:'right' }}>
                 {msg.timestamp.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
               </div>
             </div>
             {msg.sender === 'user' && (
-              <div style={{ width:28, height:28, borderRadius:'50%', backgroundColor:'#1d4ed8', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'#fff', flexShrink:0 }}>U</div>
+              <div style={{ width:28, height:28, borderRadius:'50%', backgroundColor:'#0F4C81', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'#fff', fontWeight:700, flexShrink:0 }}>U</div>
             )}
           </div>
         ))}
         {isTyping && (
           <div style={{ display:'flex', alignItems:'flex-end', gap:8 }}>
-            <div style={{ width:28, height:28, borderRadius:'50%', background:'linear-gradient(135deg,#06b6d4,#3b82f6)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'#fff', fontWeight:700 }}>AI</div>
-            <div style={{ backgroundColor:'#1e293b', border:'1px solid #22d3ee33', borderRadius:'16px 16px 16px 4px', padding:'12px 16px', display:'flex', gap:5, alignItems:'center' }}>
-              {[0,0.2,0.4].map((d,i) => <div key={i} style={{ width:7, height:7, borderRadius:'50%', backgroundColor:'#22d3ee', animation:'chatBounce 1.2s infinite', animationDelay:`${d}s` }} />)}
+            <div style={{ width:28, height:28, borderRadius:'50%', background:'linear-gradient(135deg,#0F4C81,#008BA3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'#fff', fontWeight:700 }}>AI</div>
+            <div style={{ backgroundColor:'#ffffff', border:'1px solid #d1d5db', borderRadius:'16px 16px 16px 4px', padding:'12px 16px', display:'flex', gap:5, alignItems:'center', boxShadow:'0 1px 2px rgba(0,0,0,0.05)' }}>
+              {[0,0.2,0.4].map((d,i) => <div key={i} style={{ width:7, height:7, borderRadius:'50%', backgroundColor:'#0F4C81', animation:'chatBounce 1.2s infinite', animationDelay:`${d}s` }} />)}
             </div>
           </div>
         )}
@@ -212,21 +212,21 @@ function ChatAssistant({ onBack }) {
       </div>
 
       {/* Quick Topics */}
-      <div style={{ backgroundColor:'#0a1628', borderTop:'1px solid #1e293b', padding:'8px 16px', flexShrink:0 }}>
-        <div style={{ color:'#475569', fontSize:10, marginBottom:6, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.8px' }}>Quick Topics</div>
+      <div style={{ backgroundColor:'#f3f4f6', borderTop:'1px solid #e5e7eb', padding:'8px 16px', flexShrink:0 }}>
+        <div style={{ color:'#6b7280', fontSize:10, marginBottom:6, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.8px' }}>Quick Topics</div>
         <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
           {QUICK_TOPICS.map(t => (
             <button key={t.q} onClick={() => sendMessage(t.q)} disabled={isTyping}
-              style={{ backgroundColor:'#1e293b', border:'1px solid #334155', color:'#94a3b8', padding:'4px 12px', borderRadius:20, cursor: isTyping?'not-allowed':'pointer', fontSize:12, opacity: isTyping?0.5:1, transition:'all .15s' }}
-              onMouseEnter={e=>{ if(!isTyping){e.currentTarget.style.backgroundColor='#164e63'; e.currentTarget.style.color='#22d3ee'; e.currentTarget.style.borderColor='#22d3ee'; }}}
-              onMouseLeave={e=>{ e.currentTarget.style.backgroundColor='#1e293b'; e.currentTarget.style.color='#94a3b8'; e.currentTarget.style.borderColor='#334155'; }}
+              style={{ backgroundColor:'#ffffff', border:'1px solid #d1d5db', color:'#4b5563', padding:'4px 12px', borderRadius:20, cursor: isTyping?'not-allowed':'pointer', fontSize:12, opacity: isTyping?0.5:1, transition:'all .15s' }}
+              onMouseEnter={e=>{ if(!isTyping){e.currentTarget.style.backgroundColor='#eff6ff'; e.currentTarget.style.color='#0F4C81'; e.currentTarget.style.borderColor='#0F4C81'; }}}
+              onMouseLeave={e=>{ e.currentTarget.style.backgroundColor='#ffffff'; e.currentTarget.style.color='#4b5563'; e.currentTarget.style.borderColor='#d1d5db'; }}
             >{t.label}</button>
           ))}
         </div>
       </div>
 
       {/* Input */}
-      <div style={{ backgroundColor:'#0f172a', borderTop:'2px solid #22d3ee44', padding:'12px 16px', flexShrink:0 }}>
+      <div style={{ backgroundColor:'#ffffff', borderTop:'2px solid #0F4C81', padding:'12px 16px', flexShrink:0 }}>
         <form onSubmit={handleSubmit} style={{ display:'flex', gap:10 }}>
           <input
             ref={inputRef}
@@ -235,16 +235,16 @@ function ChatAssistant({ onBack }) {
             onChange={e => setInputValue(e.target.value)}
             placeholder="Type your question here and press Enter or click Send..."
             disabled={isTyping}
-            style={{ flex:1, backgroundColor:'#1e293b', border:'1.5px solid #334155', borderRadius:10, padding:'11px 15px', color:'#f1f5f9', fontSize:14, outline:'none' }}
-            onFocus={e => e.target.style.borderColor='#22d3ee'}
-            onBlur={e => e.target.style.borderColor='#334155'}
+            style={{ flex:1, backgroundColor:'#ffffff', border:'1.5px solid #d1d5db', borderRadius:10, padding:'11px 15px', color:'#1f2937', fontSize:14, outline:'none' }}
+            onFocus={e => e.target.style.borderColor='#0F4C81'}
+            onBlur={e => e.target.style.borderColor='#d1d5db'}
           />
           <button type="submit" disabled={isTyping || !inputValue.trim()}
-            style={{ background: isTyping||!inputValue.trim() ? '#1e293b' : 'linear-gradient(135deg,#06b6d4,#3b82f6)', border:'none', borderRadius:10, padding:'11px 22px', color: isTyping||!inputValue.trim() ? '#475569' : '#fff', fontWeight:700, fontSize:14, cursor: isTyping||!inputValue.trim()?'not-allowed':'pointer', transition:'all .2s', whiteSpace:'nowrap' }}>
+            style={{ background: isTyping||!inputValue.trim() ? '#e5e7eb' : 'linear-gradient(135deg,#0F4C81,#008BA3)', border:'none', borderRadius:10, padding:'11px 22px', color: isTyping||!inputValue.trim() ? '#9ca3af' : '#ffffff', fontWeight:700, fontSize:14, cursor: isTyping||!inputValue.trim()?'not-allowed':'pointer', transition:'all .2s', whiteSpace:'nowrap' }}>
             Send
           </button>
         </form>
-        <div style={{ color:'#334155', fontSize:11, marginTop:5, textAlign:'center' }}>
+        <div style={{ color:'#6b7280', fontSize:11, marginTop:5, textAlign:'center' }}>
           Press Enter to send · Powered by Med-Claim Guardian AI
         </div>
       </div>

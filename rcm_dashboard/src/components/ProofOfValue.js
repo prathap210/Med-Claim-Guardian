@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 function ProofOfValue() {
   const [metrics, setMetrics] = useState(null); // eslint-disable-line no-unused-vars
@@ -60,12 +60,12 @@ function ProofOfValue() {
   const efficiency = calculateEfficiencyGains();
 
   const MetricCard = ({ icon, label, value, unit, color }) => (
-    <div className={`backdrop-premium p-6 rounded-xl border-l-4 ${color}`}>
+    <div className={`bg-white p-6 rounded-xl border-l-4 border border-gray-200 ${color}`}>
       <div className="flex items-start justify-between mb-2">
-        <span className="text-gray-400 text-sm">{label}</span>
+        <span className="text-gray-700 text-sm">{label}</span>
         <span className="text-3xl">{icon}</span>
       </div>
-      <div className="text-3xl font-bold text-cyan-300">
+      <div className="text-3xl font-bold text-blue-900">
         {value}{unit}
       </div>
     </div>
@@ -74,11 +74,11 @@ function ProofOfValue() {
   return (
     <div className="space-y-8">
       {/* Executive Summary */}
-      <div className="backdrop-premium p-8 rounded-2xl border-2 border-cyan-500">
-        <h2 className="text-4xl font-bold text-cyan-400 mb-4">
+      <div className="bg-white p-8 rounded-2xl border-2 border-blue-300">
+        <h2 className="text-4xl font-bold text-blue-900 mb-4">
           📊 Proof-of-Value Dashboard
         </h2>
-        <p className="text-gray-300 mb-6">
+        <p className="text-gray-700 mb-6">
           Business impact metrics demonstrating ROI and operational improvements
         </p>
 
@@ -117,49 +117,49 @@ function ProofOfValue() {
 
       {/* Financial Impact */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="backdrop-premium p-8 rounded-2xl">
-          <h3 className="text-2xl font-bold text-green-400 mb-6">💵 Financial Impact</h3>
+        <div className="bg-white p-8 rounded-2xl border border-gray-200">
+          <h3 className="text-2xl font-bold text-green-700 mb-6">💵 Financial Impact</h3>
           
           <div className="space-y-4">
-            <div className="flex justify-between items-center pb-3 border-b border-gray-600">
-              <span className="text-gray-300">Annual Claims Volume</span>
-              <span className="text-xl font-bold text-cyan-300">₹2.0 Cr</span>
+            <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+              <span className="text-gray-700">Annual Claims Volume</span>
+              <span className="text-xl font-bold text-blue-900">₹2.0 Cr</span>
             </div>
             
             <div className="space-y-3">
-              <div className="bg-red-900/20 p-4 rounded-lg border border-red-500/50">
-                <div className="text-gray-400 text-sm mb-1">Without System (12% denial rate)</div>
-                <div className="text-2xl font-bold text-red-400">₹{(roi.denialLossesBefore / 100000).toFixed(0)}L</div>
+              <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                <div className="text-gray-600 text-sm mb-1">Without System (12% denial rate)</div>
+                <div className="text-2xl font-bold text-red-700">₹{(roi.denialLossesBefore / 100000).toFixed(0)}L</div>
               </div>
               
-              <div className="flex justify-center text-cyan-400">↓</div>
+              <div className="flex justify-center text-gray-400">↓</div>
               
-              <div className="bg-green-900/20 p-4 rounded-lg border border-green-500/50">
-                <div className="text-gray-400 text-sm mb-1">With System (8% denial rate)</div>
-                <div className="text-2xl font-bold text-green-400">₹{(roi.denialLossesAfter / 100000).toFixed(0)}L</div>
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <div className="text-gray-600 text-sm mb-1">With System (8% denial rate)</div>
+                <div className="text-2xl font-bold text-green-700">₹{(roi.denialLossesAfter / 100000).toFixed(0)}L</div>
               </div>
             </div>
 
-            <div className="border-t border-gray-600 pt-4 mt-4">
+            <div className="border-t border-gray-200 pt-4 mt-4">
               <div className="flex justify-between items-center">
-                <span className="text-gray-300 font-bold">Annual Savings</span>
-                <span className="text-2xl font-bold text-cyan-400">₹{(roi.annualSavings / 100000).toFixed(0)}L</span>
+                <span className="text-gray-700 font-bold">Annual Savings</span>
+                <span className="text-2xl font-bold text-green-700">₹{(roi.annualSavings / 100000).toFixed(0)}L</span>
               </div>
               <div className="flex justify-between items-center mt-2 text-sm">
-                <span className="text-gray-400">System Cost</span>
-                <span className="text-gray-300">-₹{(roi.systemCost / 100000).toFixed(0)}L</span>
+                <span className="text-gray-600">System Cost</span>
+                <span className="text-gray-700">-₹{(roi.systemCost / 100000).toFixed(0)}L</span>
               </div>
-              <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-600">
-                <span className="text-gray-300 font-bold">Net Benefit</span>
-                <span className="text-2xl font-bold text-green-400">₹{((roi.annualSavings - roi.systemCost) / 100000).toFixed(0)}L</span>
+              <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+                <span className="text-gray-700 font-bold">Net Benefit</span>
+                <span className="text-2xl font-bold text-green-700">₹{((roi.annualSavings - roi.systemCost) / 100000).toFixed(0)}L</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Operational Efficiency */}
-        <div className="backdrop-premium p-8 rounded-2xl">
-          <h3 className="text-2xl font-bold text-blue-400 mb-6">⚡ Operational Efficiency</h3>
+        <div className="bg-white p-8 rounded-2xl border border-gray-200">
+          <h3 className="text-2xl font-bold text-blue-700 mb-6">⚡ Operational Efficiency</h3>
           
           <div className="space-y-4">
             <EfficiencyMetric
@@ -167,7 +167,7 @@ function ProofOfValue() {
               value={efficiency.manualReviewTimeSaved}
               unit="hours/month"
               icon="⏱️"
-              color="text-cyan-400"
+              color="text-blue-700"
             />
             
             <EfficiencyMetric
@@ -175,7 +175,7 @@ function ProofOfValue() {
               value={efficiency.denialAppealRate}
               unit="%"
               icon="📉"
-              color="text-green-400"
+              color="text-green-700"
             />
             
             <EfficiencyMetric
@@ -183,7 +183,7 @@ function ProofOfValue() {
               value={efficiency.firstPassAcceptance}
               unit="%"
               icon="✅"
-              color="text-blue-400"
+              color="text-teal-700"
             />
             
             <EfficiencyMetric
@@ -191,15 +191,15 @@ function ProofOfValue() {
               value={efficiency.processingTimeReduction}
               unit="%"
               icon="🚀"
-              color="text-yellow-400"
+              color="text-orange-600"
             />
           </div>
         </div>
       </div>
 
       {/* Business Benefits */}
-      <div className="backdrop-premium p-8 rounded-2xl">
-        <h3 className="text-2xl font-bold text-orange-400 mb-6">🎯 Business Benefits</h3>
+      <div className="bg-white p-8 rounded-2xl border border-gray-200">
+        <h3 className="text-2xl font-bold text-orange-700 mb-6">🎯 Business Benefits</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <BenefitCard
@@ -245,8 +245,8 @@ function ProofOfValue() {
       </div>
 
       {/* Implementation Timeline */}
-      <div className="backdrop-premium p-8 rounded-2xl">
-        <h3 className="text-2xl font-bold text-purple-400 mb-6">📅 Implementation Timeline</h3>
+      <div className="bg-white p-8 rounded-2xl border border-gray-200">
+        <h3 className="text-2xl font-bold text-purple-700 mb-6">📅 Implementation Timeline</h3>
         
         <div className="space-y-4">
           <TimelineItem
@@ -272,10 +272,10 @@ function ProofOfValue() {
 
 function EfficiencyMetric({ label, value, unit, icon, color }) {
   return (
-    <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg border border-gray-600">
+    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
       <div className="flex items-center gap-3">
         <span className="text-2xl">{icon}</span>
-        <span className="text-gray-300">{label}</span>
+        <span className="text-gray-700">{label}</span>
       </div>
       <div className={`text-2xl font-bold ${color}`}>
         {value}{unit}
@@ -286,12 +286,12 @@ function EfficiencyMetric({ label, value, unit, icon, color }) {
 
 function BenefitCard({ title, items }) {
   return (
-    <div className="bg-gray-700/30 border border-gray-600 p-6 rounded-lg">
-      <h4 className="text-lg font-bold text-cyan-300 mb-4">{title}</h4>
+    <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg">
+      <h4 className="text-lg font-bold text-blue-900 mb-4">{title}</h4>
       <ul className="space-y-2">
         {items.map((item, idx) => (
-          <li key={idx} className="flex items-start gap-3 text-gray-300">
-            <span className="text-green-400 mt-1">✓</span>
+          <li key={idx} className="flex items-start gap-3 text-gray-700">
+            <span className="text-green-700 mt-1">✓</span>
             <span>{item}</span>
           </li>
         ))}
@@ -302,16 +302,16 @@ function BenefitCard({ title, items }) {
 
 function TimelineItem({ phase, duration, description }) {
   return (
-    <div className="flex gap-4 pb-4 border-b border-gray-600 last:border-b-0">
+    <div className="flex gap-4 pb-4 border-b border-gray-200 last:border-b-0">
       <div className="flex-shrink-0">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold">
+        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-700 to-teal-600 flex items-center justify-center text-white font-bold">
           →
         </div>
       </div>
       <div className="flex-grow">
-        <h4 className="text-cyan-300 font-bold">{phase}</h4>
-        <p className="text-gray-400 text-sm">{duration}</p>
-        <p className="text-gray-300 mt-1">{description}</p>
+        <h4 className="text-blue-900 font-bold">{phase}</h4>
+        <p className="text-gray-600 text-sm">{duration}</p>
+        <p className="text-gray-700 mt-1">{description}</p>
       </div>
     </div>
   );

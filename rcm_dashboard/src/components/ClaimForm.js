@@ -132,260 +132,198 @@ const ClaimForm = ({ onSubmit, onReset, isLoading }) => {
     if (onReset) onReset();
   };
 
+  const FormField = ({ name, label, type = 'text', options, description, icon, isReadOnly = false, isDropdown = false }) => (
+    <div className="group">
+      <label className="flex items-center gap-2 text-sm font-semibold text-blue-900 mb-2 hover:text-blue-700 transition-colors">
+        <span className="text-lg">{icon}</span>
+        {label}
+        <span className="text-red-500 ml-0.5">*</span>
+      </label>
+      <p className="text-xs text-gray-600 mb-2.5">{description}</p>
+      {isDropdown ? (
+        <select
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          className="w-full px-4 py-3 bg-white border border-blue-200 rounded-lg text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-blue-300"
+          required
+        >
+          {options.map((opt) => (
+            <option key={opt} value={opt} className="bg-white text-blue-900">
+              {typeof opt === 'string' ? (opt === 'yes' ? 'Yes' : opt === 'no' ? 'No' : opt) : opt}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          type={type}
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          className={`w-full px-4 py-3 bg-white border border-blue-200 rounded-lg text-blue-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-blue-300 ${isReadOnly ? 'cursor-not-allowed bg-gray-50' : ''}`}
+          {...(type === 'number' && name === 'patient_age' ? { min: '1', max: '120' } : {})}
+          {...(type === 'number' && name === 'claim_amount' ? { min: '0', step: '0.01' } : {})}
+          {...(type === 'number' && name === 'claim_submission_delay_days' ? { min: '0', max: '365' } : {})}
+          required={!isReadOnly}
+          disabled={isReadOnly}
+        />
+      )}
+    </div>
+  );
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Patient Age */}
-      <div className="group">
-        <label className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-2 hover:text-cyan-300 transition-colors">
-          <span className="text-xl">{FIELD_ICONS.patient_age}</span>
-          Patient Age
-        </label>
-        <p className="text-xs text-white/60 mb-2">{FIELD_DESCRIPTIONS.patient_age}</p>
-        <input
-          type="number"
-          name="patient_age"
-          value={formData.patient_age}
-          onChange={handleChange}
-          className="w-full px-4 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white/20 transition-all duration-300 hover:border-white/30"
-          min="1"
-          max="120"
-          required
-        />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* 1. PATIENT & INSURANCE INFORMATION */}
+      <div className="bg-blue-50 p-6 rounded-xl border-l-4 border-blue-700">
+        <h3 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">
+          <span>👤</span> Patient & Insurance Information
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <FormField
+            name="patient_age"
+            label="Patient Age"
+            type="number"
+            description={FIELD_DESCRIPTIONS.patient_age}
+            icon={FIELD_ICONS.patient_age}
+          />
+          <FormField
+            name="insurance_type"
+            label="Insurance Type"
+            options={CATEGORICAL_OPTIONS.insurance_type}
+            description={FIELD_DESCRIPTIONS.insurance_type}
+            icon={FIELD_ICONS.insurance_type}
+            isDropdown={true}
+          />
+          <FormField
+            name="payer"
+            label="Insurance Payer"
+            options={CATEGORICAL_OPTIONS.payer}
+            description={FIELD_DESCRIPTIONS.payer}
+            icon={FIELD_ICONS.payer}
+            isDropdown={true}
+          />
+        </div>
       </div>
 
-      {/* Insurance Type */}
-      <div className="group">
-        <label className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-2 hover:text-cyan-300 transition-colors">
-          <span className="text-xl">{FIELD_ICONS.insurance_type}</span>
-          Insurance Type
-        </label>
-        <p className="text-xs text-white/60 mb-2">{FIELD_DESCRIPTIONS.insurance_type}</p>
-        <select
-          name="insurance_type"
-          value={formData.insurance_type}
-          onChange={handleChange}
-          className="w-full px-4 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white/20 transition-all duration-300 hover:border-white/30"
-          required
-        >
-          {CATEGORICAL_OPTIONS.insurance_type.map((opt) => (
-            <option key={opt} value={opt} className="bg-slate-800">
-              {opt}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Procedure Code */}
-      <div className="group">
-        <label className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-2 hover:text-cyan-300 transition-colors">
-          <span className="text-xl">{FIELD_ICONS.procedure_code}</span>
-          Procedure Code
-        </label>
-        <p className="text-xs text-white/60 mb-2">{FIELD_DESCRIPTIONS.procedure_code}</p>
-        <select
-          name="procedure_code"
-          value={formData.procedure_code}
-          onChange={handleChange}
-          className="w-full px-4 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white/20 transition-all duration-300 hover:border-white/30"
-          required
-        >
-          {CATEGORICAL_OPTIONS.procedure_code.map((opt) => (
-            <option key={opt} value={opt} className="bg-slate-800">
-              {opt}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Diagnosis Code */}
-      <div className="group">
-        <label className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-2 hover:text-cyan-300 transition-colors">
-          <span className="text-xl">{FIELD_ICONS.diagnosis_code}</span>
-          Diagnosis Code
-        </label>
-        <p className="text-xs text-white/60 mb-2">{FIELD_DESCRIPTIONS.diagnosis_code}</p>
-        <select
-          name="diagnosis_code"
-          value={formData.diagnosis_code}
-          onChange={handleChange}
-          className="w-full px-4 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white/20 transition-all duration-300 hover:border-white/30"
-          required
-        >
-          {CATEGORICAL_OPTIONS.diagnosis_code.map((opt) => (
-            <option key={opt} value={opt} className="bg-slate-800">
-              {opt}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Provider Type */}
-      <div className="group">
-        <label className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-2 hover:text-cyan-300 transition-colors">
-          <span className="text-xl">{FIELD_ICONS.provider_type}</span>
-          Provider Type
-        </label>
-        <p className="text-xs text-white/60 mb-2">{FIELD_DESCRIPTIONS.provider_type}</p>
-        <select
-          name="provider_type"
-          value={formData.provider_type}
-          onChange={handleChange}
-          className="w-full px-4 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white/20 transition-all duration-300 hover:border-white/30"
-          required
-        >
-          {CATEGORICAL_OPTIONS.provider_type.map((opt) => (
-            <option key={opt} value={opt} className="bg-slate-800">
-              {opt}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Claim Amount */}
-      <div className="group">
-        <label className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-2 hover:text-cyan-300 transition-colors">
-          <span className="text-xl">{FIELD_ICONS.claim_amount}</span>
-          Claim Amount (₹)
-        </label>
-        <p className="text-xs text-white/60 mb-2">{FIELD_DESCRIPTIONS.claim_amount}</p>
-        <input
-          type="number"
-          name="claim_amount"
-          value={formData.claim_amount}
-          onChange={handleChange}
-          className="w-full px-4 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white/20 transition-all duration-300 hover:border-white/30"
-          min="0"
-          step="0.01"
-          required
-        />
-      </div>
-
-      {/* Prior Authorization */}
-      <div className="group">
-        <label className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-2 hover:text-cyan-300 transition-colors">
-          <span className="text-xl">{FIELD_ICONS.prior_authorization}</span>
-          Prior Authorization
-        </label>
-        <p className="text-xs text-white/60 mb-2">{FIELD_DESCRIPTIONS.prior_authorization}</p>
-        <select
-          name="prior_authorization"
-          value={formData.prior_authorization}
-          onChange={handleChange}
-          className="w-full px-4 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white/20 transition-all duration-300 hover:border-white/30"
-          required
-        >
-          {CATEGORICAL_OPTIONS.prior_authorization.map((opt) => (
-            <option key={opt} value={opt} className="bg-slate-800">
-              {opt === 'yes' ? 'Yes' : 'No'}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Documentation Complete */}
-      <div className="group">
-        <label className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-2 hover:text-cyan-300 transition-colors">
-          <span className="text-xl">{FIELD_ICONS.documentation_complete}</span>
-          Documentation Complete
-        </label>
-        <p className="text-xs text-white/60 mb-2">{FIELD_DESCRIPTIONS.documentation_complete}</p>
-        <select
-          name="documentation_complete"
-          value={formData.documentation_complete}
-          onChange={handleChange}
-          className="w-full px-4 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white/20 transition-all duration-300 hover:border-white/30"
-          required
-        >
-          {CATEGORICAL_OPTIONS.documentation_complete.map((opt) => (
-            <option key={opt} value={opt} className="bg-slate-800">
-              {opt === 'yes' ? 'Yes' : 'No'}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Coding Accuracy Score — Auto-calculated, not editable */}
-      <div className="group">
-        <label className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-2">
-          <span className="text-xl">{FIELD_ICONS.coding_accuracy_score}</span>
-          Coding Accuracy Score
-          <span className="ml-auto text-xs font-normal px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Auto-calculated</span>
-        </label>
-        <p className="text-xs text-white/60 mb-3">Automatically determined by procedure–diagnosis code compatibility</p>
-        <div className="flex items-center gap-3 px-4 py-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-lg cursor-not-allowed">
-          <div className="flex-1 h-2 rounded-full bg-white/10 relative overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${(formData.coding_accuracy_score * 100).toFixed(0)}%`,
-                background: formData.coding_accuracy_score >= 0.85
-                  ? 'linear-gradient(to right, #22d3ee, #3b82f6)'
+      {/* 2. CLINICAL & CODING INFORMATION */}
+      <div className="bg-teal-50 p-6 rounded-xl border-l-4 border-teal-700">
+        <h3 className="text-lg font-bold text-teal-900 mb-4 flex items-center gap-2">
+          <span>🔬</span> Clinical & Coding Information
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <FormField
+            name="procedure_code"
+            label="Procedure Code"
+            options={CATEGORICAL_OPTIONS.procedure_code}
+            description={FIELD_DESCRIPTIONS.procedure_code}
+            icon={FIELD_ICONS.procedure_code}
+            isDropdown={true}
+          />
+          <FormField
+            name="diagnosis_code"
+            label="Diagnosis Code"
+            options={CATEGORICAL_OPTIONS.diagnosis_code}
+            description={FIELD_DESCRIPTIONS.diagnosis_code}
+            icon={FIELD_ICONS.diagnosis_code}
+            isDropdown={true}
+          />
+          <div className="group md:col-span-1 lg:col-span-1">
+            <label className="flex items-center gap-2 text-sm font-semibold text-teal-900 mb-2">
+              <span className="text-lg">{FIELD_ICONS.coding_accuracy_score}</span>
+              Coding Accuracy
+              <span className="ml-auto text-xs font-normal px-2 py-0.5 rounded-full bg-teal-200 text-teal-800 border border-teal-300">Auto</span>
+            </label>
+            <p className="text-xs text-gray-600 mb-2.5">Procedure–diagnosis compatibility</p>
+            <div className="flex items-center gap-2 px-4 py-3 bg-white border border-teal-200 rounded-lg">
+              <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${(formData.coding_accuracy_score * 100).toFixed(0)}%`,
+                    background: formData.coding_accuracy_score >= 0.85
+                      ? 'linear-gradient(to right, #059669, #10b981)'
+                      : formData.coding_accuracy_score >= 0.60
+                      ? 'linear-gradient(to right, #f59e0b, #fbbf24)'
+                      : 'linear-gradient(to right, #ef4444, #f87171)',
+                  }}
+                />
+              </div>
+              <div className={`px-3 py-1.5 rounded font-bold text-xs w-14 text-center border ${
+                formData.coding_accuracy_score >= 0.85
+                  ? 'bg-green-100 border-green-300 text-green-800'
                   : formData.coding_accuracy_score >= 0.60
-                  ? 'linear-gradient(to right, #f59e0b, #f97316)'
-                  : 'linear-gradient(to right, #f87171, #ef4444)',
-              }}
-            />
-          </div>
-          <div className={`px-4 py-2 rounded-lg font-bold text-center w-16 border ${
-            formData.coding_accuracy_score >= 0.85
-              ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-300'
-              : formData.coding_accuracy_score >= 0.60
-              ? 'bg-amber-500/20 border-amber-400/50 text-amber-300'
-              : 'bg-red-500/20 border-red-400/50 text-red-300'
-          }`}>
-            {(formData.coding_accuracy_score * 100).toFixed(0)}%
+                  ? 'bg-amber-100 border-amber-300 text-amber-800'
+                  : 'bg-red-100 border-red-300 text-red-800'
+              }`}>
+                {(formData.coding_accuracy_score * 100).toFixed(0)}%
+              </div>
+            </div>
           </div>
         </div>
-        <p className="text-xs mt-1.5 text-white/40">Changes when you select different Procedure or Diagnosis codes</p>
       </div>
 
-      {/* Submission Delay */}
-      <div className="group">
-        <label className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-2 hover:text-cyan-300 transition-colors">
-          <span className="text-xl">{FIELD_ICONS.claim_submission_delay_days}</span>
-          Submission Delay (days)
-        </label>
-        <p className="text-xs text-white/60 mb-2">{FIELD_DESCRIPTIONS.claim_submission_delay_days}</p>
-        <input
-          type="number"
-          name="claim_submission_delay_days"
-          value={formData.claim_submission_delay_days}
-          onChange={handleChange}
-          className="w-full px-4 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white/20 transition-all duration-300 hover:border-white/30"
-          min="0"
-          max="365"
-          required
-        />
+      {/* 3. PROVIDER & CLAIM INFORMATION */}
+      <div className="bg-green-50 p-6 rounded-xl border-l-4 border-green-700">
+        <h3 className="text-lg font-bold text-green-900 mb-4 flex items-center gap-2">
+          <span>🏥</span> Provider & Claim Information
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <FormField
+            name="provider_type"
+            label="Provider Type"
+            options={CATEGORICAL_OPTIONS.provider_type}
+            description={FIELD_DESCRIPTIONS.provider_type}
+            icon={FIELD_ICONS.provider_type}
+            isDropdown={true}
+          />
+          <FormField
+            name="claim_amount"
+            label="Claim Amount (₹)"
+            type="number"
+            description={FIELD_DESCRIPTIONS.claim_amount}
+            icon={FIELD_ICONS.claim_amount}
+          />
+          <FormField
+            name="claim_submission_delay_days"
+            label="Submission Delay (days)"
+            type="number"
+            description={FIELD_DESCRIPTIONS.claim_submission_delay_days}
+            icon={FIELD_ICONS.claim_submission_delay_days}
+          />
+        </div>
       </div>
 
-      {/* Payer */}
-      <div className="group">
-        <label className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-2 hover:text-cyan-300 transition-colors">
-          <span className="text-xl">{FIELD_ICONS.payer}</span>
-          Payer
-        </label>
-        <p className="text-xs text-white/60 mb-2">{FIELD_DESCRIPTIONS.payer}</p>
-        <select
-          name="payer"
-          value={formData.payer}
-          onChange={handleChange}
-          className="w-full px-4 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white/20 transition-all duration-300 hover:border-white/30"
-          required
-        >
-          {CATEGORICAL_OPTIONS.payer.map((opt) => (
-            <option key={opt} value={opt} className="bg-slate-800">
-              {opt}
-            </option>
-          ))}
-        </select>
+      {/* 4. DOCUMENTATION & AUTHORIZATION */}
+      <div className="bg-orange-50 p-6 rounded-xl border-l-4 border-orange-700">
+        <h3 className="text-lg font-bold text-orange-900 mb-4 flex items-center gap-2">
+          <span>📋</span> Documentation & Authorization
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <FormField
+            name="documentation_complete"
+            label="Documentation Complete"
+            options={CATEGORICAL_OPTIONS.documentation_complete}
+            description={FIELD_DESCRIPTIONS.documentation_complete}
+            icon={FIELD_ICONS.documentation_complete}
+            isDropdown={true}
+          />
+          <FormField
+            name="prior_authorization"
+            label="Prior Authorization"
+            options={CATEGORICAL_OPTIONS.prior_authorization}
+            description={FIELD_DESCRIPTIONS.prior_authorization}
+            icon={FIELD_ICONS.prior_authorization}
+            isDropdown={true}
+          />
+        </div>
       </div>
 
       {/* Buttons */}
-      <div className="flex gap-3 pt-6 border-t border-white/10">
+      <div className="flex gap-3 pt-4 border-t border-gray-300">
         <button
           type="submit"
           disabled={isLoading}
-          className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-lg hover:from-cyan-400 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-cyan-500/50 disabled:hover:scale-100"
+          className="flex-1 px-6 py-3.5 bg-gradient-to-r from-blue-600 to-teal-600 text-white font-bold rounded-lg hover:from-blue-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-blue-500/40 disabled:hover:scale-100 text-base"
         >
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">
@@ -395,7 +333,7 @@ const ClaimForm = ({ onSubmit, onReset, isLoading }) => {
           ) : (
             <span className="flex items-center justify-center gap-2">
               <span>🚀</span>
-              Predict
+              Predict Claim
             </span>
           )}
         </button>
@@ -403,11 +341,11 @@ const ClaimForm = ({ onSubmit, onReset, isLoading }) => {
           type="button"
           onClick={resetForm}
           disabled={isLoading}
-          className="flex-1 px-6 py-3 bg-gradient-to-r from-slate-600/50 to-slate-700/50 text-white font-bold rounded-lg hover:from-slate-600 hover:to-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-slate-500/30 disabled:hover:scale-100 border border-white/20"
+          className="flex-1 px-6 py-3.5 bg-gray-200 text-gray-800 font-bold border border-gray-300 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-gray-400/40 disabled:hover:scale-100 text-base"
         >
           <span className="flex items-center justify-center gap-2">
             <span>🔄</span>
-            Reset
+            Reset Form
           </span>
         </button>
       </div>

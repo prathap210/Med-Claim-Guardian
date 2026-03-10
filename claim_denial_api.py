@@ -8,27 +8,45 @@ import numpy as np
 import os
 import tempfile
 import shutil
-from typing import Literal, List, Dict, Any
+import logging
+from typing import Literal, List, Dict, Any, Optional
 import warnings
 import socket
+from datetime import datetime
 from dotenv import load_dotenv
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from cachetools import TTLCache
+import threading
 
 load_dotenv()
 warnings.filterwarnings('ignore')
 
+# Configure logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+# Cache configuration
+analytics_cache: Dict[str, Any] = {}
+analytics_cache_lock = threading.Lock()
+ANALYTICS_CACHE_TTL = 300  # 5 minutes in seconds
+
 # Database
 from database import SessionLocal, Base, engine, PredictionHistory
 Base.metadata.create_all(bind=engine)
-print("[OK] SQLite database ready")
+logger.info("SQLite database ready")
 
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)
 
 # Admin API key for protected endpoints
-ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "change-this-key")
+ADMIN_API_KEY = os.getenv("ADMIN_API_KEY")
+if not ADMIN_API_KEY:
+    raise RuntimeError(
+        "ADMIN_API_KEY environment variable is required for security. "
+        "Please set it in your .env file or environment."
+    )
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 def require_admin_key(key: str = Depends(api_key_header)):
@@ -51,14 +69,28 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Add CORS middleware
+# Add CORS middleware - restrict based on environment
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+
+if ENVIRONMENT == "production":
+    # Production: Only allow specified frontend URL
+    allowed_origins = [FRONTEND_URL]
+else:
+    # Development: Allow localhost on multiple ports
+    allowed_origins = [
+        FRONTEND_URL,
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
+    ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL, "http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003"],
-    allow_origin_regex=r"http://localhost:\d+",
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -72,23 +104,23 @@ FEATURE_NAMES_PATH = os.path.join(BASE_DIR, 'feature_names.pkl')
 try:
     model = joblib.load(MODEL_PATH)
     encoder = joblib.load(ENCODERS_PATH)   # OrdinalEncoder (handles unknown categories)
-    print("[OK] Model and encoder loaded successfully!")
+    logger.info("Model and encoder loaded successfully!")
 except FileNotFoundError as e:
-    print(f"Error: Could not load model or encoder. {e}")
+    logger.error(f"Could not load model or encoder: {e}", exc_info=True)
     raise
 
 # SHAP explainer will be initialized lazily on first prediction request
 explainer = None
-print("[OK] SHAP will initialize on first prediction (lazy load)")
+logger.info("SHAP will initialize on first prediction (lazy load)")
 
 # Load schema (feature order, categorical columns, encoder categories)
 schema: Dict[str, Any] = {}
 try:
     if os.path.exists(FEATURE_NAMES_PATH):
         schema = joblib.load(FEATURE_NAMES_PATH)
-        print("[OK] Schema metadata loaded successfully!")
+        logger.info("Schema metadata loaded successfully!")
 except Exception as e:
-    print(f"Warning: Could not load schema: {e}")
+    logger.warning(f"Could not load schema: {e}")
 
 feature_metadata = schema  # backward-compat alias
 
@@ -197,9 +229,91 @@ def get_rule_based_recommendations(features: dict) -> List[str]:
 
     return recommendations
 
+# ============================================================
+# STARTUP VALIDATION
+# ============================================================
+@app.on_event("startup")
+async def startup_validation():
+    """Validate all required configurations and dependencies at startup"""
+    logger.info("Starting application validation...")
+    
+    # Check required environment variables
+    required_env_vars = ['JWT_SECRET_KEY', 'ADMIN_API_KEY']
+    missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+    
+    if missing_vars:
+        error_msg = f"Missing required environment variables: {', '.join(missing_vars)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg)
+    
+    # Check if model files exist
+    model_files = [MODEL_PATH, ENCODERS_PATH]
+    missing_files = [f for f in model_files if not os.path.exists(f)]
+    
+    if missing_files:
+        error_msg = f"Missing required model files: {', '.join(missing_files)}. Please run 'python predict_claim_denials.py' first."
+        logger.error(error_msg)
+        raise RuntimeError(error_msg)
+    
+    # Log successful startup
+    logger.info("✓ All startup validations passed")
+    logger.info(f"✓ Environment: {ENVIRONMENT}")
+    logger.info(f"✓ Frontend URL: {FRONTEND_URL}")
+    logger.info(f"✓ SHAP available: {SHAP_AVAILABLE}")
+    logger.info("Application is ready to accept requests")
+
+# ============================================================
+# CACHING HELPERS
+# ============================================================
+def get_cached_analytics(cache_key: str, fetch_func, ttl: int = ANALYTICS_CACHE_TTL) -> Dict[str, Any]:
+    """
+    Get analytics data from cache or fetch and cache if expired.
+    
+    Args:
+        cache_key: Unique key for this analytics query
+        fetch_func: Function to call to fetch fresh data
+        ttl: Time to live for cache in seconds (default 5 minutes)
+        
+    Returns:
+        Analytics data (cached or fresh)
+    """
+    with analytics_cache_lock:
+        if cache_key in analytics_cache:
+            cached_item = analytics_cache[cache_key]
+            age = (datetime.utcnow() - cached_item['timestamp']).total_seconds()
+            
+            if age < ttl:
+                logger.debug(f"Cache HIT for {cache_key} (age: {age:.1f}s)")
+                return cached_item['data']
+            else:
+                logger.debug(f"Cache EXPIRED for {cache_key} (age: {age:.1f}s)")
+        
+        # Fetch fresh data
+        logger.debug(f"Cache MISS for {cache_key}, fetching fresh data")
+        data = fetch_func()
+        
+        # Store in cache
+        analytics_cache[cache_key] = {
+            'data': data,
+            'timestamp': datetime.utcnow()
+        }
+        
+        return data
+
+def invalidate_analytics_cache():
+    """Invalidate all analytics caches (called after model retraining)"""
+    with analytics_cache_lock:
+        analytics_cache.clear()
+        logger.info("Analytics cache invalidated due to model retrain")
+
 @app.get("/")
 def read_root():
-    """Health check endpoint"""
+    """
+    Health check endpoint.
+    
+    Returns:
+        dict: API status and version information
+    """
     return {
         "message": "Claim Denial Prediction API",
         "version": "1.0.0",
@@ -207,12 +321,59 @@ def read_root():
     }
 
 @app.post("/predict", response_model=ClaimPredictionResponse)
-def predict_claim_denial(request: ClaimPredictionRequest) -> ClaimPredictionResponse:
+@limiter.limit("60/minute")
+def predict_claim_denial(request: ClaimPredictionRequest, request_obj: Request) -> ClaimPredictionResponse:
     """
-    Predict the probability of claim denial.
+    Predict the probability of healthcare claim denial with AI-powered explainability.
+    
+    This endpoint uses a trained Random Forest model to predict claim denial probability
+    and provides SHAP-based feature importance explanations for model transparency.
     
     Args:
-        request: ClaimPredictionRequest with all required fields
+        request: ClaimPredictionRequest containing:
+            - patient_age: Age of the patient (required)
+            - insurance_type: Type of insurance coverage (required)
+            - procedure_code: Medical procedure code (required)
+            - diagnosis_code: Medical diagnosis code (required)
+            - provider_type: Type of medical provider (required)
+            - claim_amount: Amount claimed in dollars (required)
+            - prior_authorization: Whether prior auth was obtained (required)
+            - documentation_complete: Whether documentation is complete (required)
+            - coding_accuracy_score: Medical coding accuracy (0-1) (required)
+            - claim_submission_delay_days: Days between treatment and submission (required)
+            - payer: Insurance payer name (required)
+    
+    Returns:
+        ClaimPredictionResponse containing:
+            - denial_probability: Probability of claim denial (0-1)
+            - risk_level: Risk categorization (Low/Medium/High)
+            - suggested_action: Patient-friendly recommended action
+            - confidence_score: Model confidence in prediction (0-1)
+            - rule_based_recommendations: List of actionable recommendations
+            - feature_contributions: SHAP feature importance breakdown (if available)
+            - shap_available: Whether SHAP explanations were generated
+    
+    Raises:
+        HTTPException: 422 if input validation fails
+        HTTPException: 429 if rate limit exceeded (60 requests/minute)
+        HTTPException: 500 if prediction fails
+    
+    Example:
+        POST /predict
+        {
+            "patient_age": 45,
+            "insurance_type": "Private",
+            "procedure_code": "PROC_A",
+            "diagnosis_code": "DX1",
+            "provider_type": "Specialist",
+            "claim_amount": 5000.0,
+            "prior_authorization": "Yes",
+            "documentation_complete": "Yes",
+            "coding_accuracy_score": 0.85,
+            "claim_submission_delay_days": 3,
+            "payer": "BlueCross"
+        }
+    """
         
     Returns:
         ClaimPredictionResponse with denial probability, risk level, and suggested action
@@ -264,7 +425,7 @@ def predict_claim_denial(request: ClaimPredictionRequest) -> ClaimPredictionResp
             try:
                 explainer = shap.TreeExplainer(model)
             except Exception as e:
-                print(f"Warning: Could not initialize SHAP explainer: {e}")
+                logger.warning(f"Could not initialize SHAP explainer: {e}")
         if explainer is not None and SHAP_AVAILABLE:
             try:
                 # Get SHAP values for the input
@@ -294,7 +455,7 @@ def predict_claim_denial(request: ClaimPredictionRequest) -> ClaimPredictionResp
                 )
                 shap_available = True
             except Exception as e:
-                print(f"Warning: Could not generate SHAP values: {e}")
+                logger.warning(f"Could not generate SHAP values: {e}")
         
         response = ClaimPredictionResponse(
             denial_probability=round(denial_probability, 4),
@@ -328,7 +489,7 @@ def predict_claim_denial(request: ClaimPredictionRequest) -> ClaimPredictionResp
             db.commit()
             db.close()
         except Exception as db_err:
-            print(f"Warning: DB save failed: {db_err}")
+            logger.warning(f"DB save failed: {db_err}")
         return response
     
     except HTTPException:
@@ -342,14 +503,54 @@ def predict_claim_denial(request: ClaimPredictionRequest) -> ClaimPredictionResp
 @app.post("/retrain", dependencies=[Depends(require_admin_key)])
 async def retrain_model(file: UploadFile = File(...)):
     """
-    Retrain the model on any uploaded CSV dataset.
-    Accepts any healthcare claims CSV — columns are auto-detected.
-    The new model is immediately hot-swapped into the running server.
+    Retrain the model on a custom healthcare claims dataset.
+    
+    **Important:** Requires X-API-Key header with admin credentials.
+    
+    This endpoint allows administrators to retrain the denial prediction model
+    on new datasets. The model is immediately hot-swapped, so all subsequent
+    predictions use the newly trained model without downtime.
+    
+    Args:
+        file: CSV file containing healthcare claims data. The CSV should include
+            columns for patient demographics, claim details, and denial status.
+            Columns are auto-detected. Maximum file size: 50MB.
+    
+    Returns:
+        dict containing:
+            - status: "success" if retraining completed
+            - message: Human-readable status message
+            - rows_used: Number of rows used for training
+            - features: List of feature names
+            - feature_importances: Dictionary of feature importance scores
+            - categorical_columns: List of categorical columns detected
+            - encoder_categories: Categories for each categorical column
+    
+    Raises:
+        HTTPException: 400 if file is not CSV or is invalid
+        HTTPException: 403 if API key is missing or invalid
+        HTTPException: 413 if file exceeds 50MB
+        HTTPException: 500 if retraining fails
+    
+    Side Effects:
+        - Invalidates all analytics caches
+        - Resets SHAP explainer (will reinitialize on next prediction)
     """
     global model, encoder, schema, explainer, feature_metadata
 
+    # File extension validation
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="Only CSV files are accepted.")
+
+    # File size validation (max 50MB)
+    MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+    file_size = await file.seek(0, 2)
+    await file.seek(0)
+    if file_size > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size is 50MB, received {file_size / 1024 / 1024:.2f}MB"
+        )
 
     # Save upload to a temp file
     tmp_path = None
@@ -357,6 +558,15 @@ async def retrain_model(file: UploadFile = File(...)):
         with tempfile.NamedTemporaryFile(delete=False, suffix='.csv') as tmp:
             shutil.copyfileobj(file.file, tmp)
             tmp_path = tmp.name
+
+        # Validate CSV structure before proceeding
+        try:
+            test_df = pd.read_csv(tmp_path, nrows=1)
+            if test_df.empty:
+                raise HTTPException(status_code=400, detail="CSV file is empty.")
+            logger.info(f"CSV file validated: {len(test_df.columns)} columns")
+        except pd.errors.ParserError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid CSV format: {str(e)}")
 
         # Import the generalized training pipeline
         from predict_claim_denials import train as run_training
@@ -369,9 +579,13 @@ async def retrain_model(file: UploadFile = File(...)):
         feature_metadata = new_schema
         explainer = None  # reset SHAP; will reinitialize lazily
 
+        # Invalidate analytics caches since data may have changed
+        invalidate_analytics_cache()
+
         feature_cols = new_schema.get('feature_names', [])
         importances  = dict(zip(feature_cols, new_model.feature_importances_.tolist()))
 
+        logger.info(f"Model successfully retrained on file: {file.filename}")
         return {
             "status": "success",
             "message": f"Model retrained on '{file.filename}' and hot-swapped.",
@@ -381,7 +595,10 @@ async def retrain_model(file: UploadFile = File(...)):
             "categorical_columns": new_schema.get('categorical_columns', []),
             "encoder_categories": new_schema.get('encoder_categories', {}),
         }
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Retraining failed: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Retraining failed: {str(e)}")
     finally:
         if tmp_path and os.path.exists(tmp_path):
@@ -390,7 +607,40 @@ async def retrain_model(file: UploadFile = File(...)):
 
 @app.get("/model-info")
 def get_model_info():
-    """Get live information about the currently loaded model"""
+    """
+    Get detailed information about the currently loaded model.
+    
+    Returns information about the active prediction model, including:
+    - Model type and configuration
+    - Features and categorical variables
+    - Feature importance scores
+    - Encoder categories for categorical variables
+    
+    Returns:
+        dict containing:
+            - model_type: Type of model (e.g., "RandomForestClassifier")
+            - n_estimators: Number of decision trees in the forest
+            - encoder_type: Type of categorical encoder used
+            - trained_on_columns: List of features the model was trained on
+            - categorical_columns: List of categorical features
+            - encoder_categories: Possible values for each categorical feature
+            - feature_importances: Dictionary of feature importance scores
+    
+    Example Response:
+        {
+            "model_type": "RandomForestClassifier",
+            "n_estimators": 100,
+            "encoder_type": "OrdinalEncoder",
+            "trained_on_columns": ["patient_age", "insurance_type", ...],
+            "categorical_columns": ["insurance_type", "procedure_code", ...],
+            "encoder_categories": {...},
+            "feature_importances": {
+                "coding_accuracy_score": 0.1749,
+                "claim_submission_delay_days": 0.1679,
+                ...
+            }
+        }
+    """
     feature_cols = schema.get('feature_names', _DEFAULT_FEAT_ORDER)
     importances  = dict(zip(feature_cols, model.feature_importances_.tolist()))
     return {
@@ -405,73 +655,184 @@ def get_model_info():
 
 @app.get("/analytics")
 def get_analytics():
-    """Get aggregated analytics about claims"""
-    try:
-        from claims_analytics import ClaimsAnalytics
-        
-        analytics = ClaimsAnalytics(os.path.join(BASE_DIR, 'synthetic_healthcare_claims_dataset.csv'))
-        return analytics.generate_all_analytics()
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error generating analytics: {str(e)}"
-        )
+    """
+    Get comprehensive aggregated analytics about healthcare claims.
+    
+    **Cached Response:** Results are cached for 5 minutes to improve performance
+    for frequently requested analytics. Cache is invalidated when the model is retrained.
+    
+    Returns aggregated statistics including:
+    - Overall claim statistics and denial rates
+    - Top procedures by denial rate
+    - Payer-level denial analysis
+    - Provider type analysis
+    - Insurance type breakdown
+    
+    Returns:
+        dict containing:
+            - overall: Summary statistics across all claims
+            - procedures: Top procedures by denial rate
+            - payers: Denial rates by insurance company
+            - providers: Denial rates by provider type
+            - insurance_types: Denial rates by insurance type
+            - coding: Coding accuracy statistics
+    
+    Raises:
+        HTTPException: 500 if analytics generation fails
+    
+    Example Response:
+        {
+            "overall": {
+                "total_claims": 5000,
+                "denied_claims": 1693,
+                "denial_rate": 0.3386,
+                ...
+            },
+            "procedures": [...],
+            "payers": [...]
+        }
+    """
+    def fetch_analytics():
+        try:
+            from claims_analytics import ClaimsAnalytics
+            
+            analytics = ClaimsAnalytics(os.path.join(BASE_DIR, 'synthetic_healthcare_claims_dataset.csv'))
+            result = analytics.generate_all_analytics()
+            logger.info("Analytics generated successfully")
+            return result
+        except Exception as e:
+            logger.error(f"Error generating analytics: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error generating analytics: {str(e)}"
+            )
+    
+    return get_cached_analytics('analytics_full', fetch_analytics)
 
 @app.get("/analytics/summary")
 def get_analytics_summary():
-    """Get summary analytics"""
-    try:
-        from claims_analytics import ClaimsAnalytics
-        
-        analytics = ClaimsAnalytics(os.path.join(BASE_DIR, 'synthetic_healthcare_claims_dataset.csv'))
-        return {
-            "overall": analytics.get_overall_statistics(),
-            "top_procedures": analytics.get_top_procedures_by_denial_rate(top_n=10),
-            "denial_by_payer": analytics.get_denial_rate_by_payer(),
-            "claim_amount_comparison": analytics.get_claim_amount_comparison()
-        }
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error generating summary: {str(e)}"
-        )
+    """
+    Get summary analytics with key metrics and top findings.
+    
+    **Cached Response:** Results are cached for 5 minutes. Cache is invalidated
+    when the model is retrained.
+    
+    Returns:
+        dict containing:
+            - overall: Overall claim statistics and denial rates
+            - top_procedures: Top 10 procedures by denial rate
+            - denial_by_payer: Denial rates for each insurance company
+            - claim_amount_comparison: Statistics on claim amounts
+    
+    Raises:
+        HTTPException: 500 if summary generation fails
+    """
+    def fetch_summary():
+        try:
+            from claims_analytics import ClaimsAnalytics
+            
+            analytics = ClaimsAnalytics(os.path.join(BASE_DIR, 'synthetic_healthcare_claims_dataset.csv'))
+            result = {
+                "overall": analytics.get_overall_statistics(),
+                "top_procedures": analytics.get_top_procedures_by_denial_rate(top_n=10),
+                "denial_by_payer": analytics.get_denial_rate_by_payer(),
+                "claim_amount_comparison": analytics.get_claim_amount_comparison()
+            }
+            logger.info("Summary analytics generated successfully")
+            return result
+        except Exception as e:
+            logger.error(f"Error generating summary: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error generating summary: {str(e)}"
+            )
+    
+    return get_cached_analytics('analytics_summary', fetch_summary)
 
 @app.get("/analytics/procedures")
 def get_procedures_analytics():
-    """Get procedure-level analytics"""
-    try:
-        from claims_analytics import ClaimsAnalytics
-        
-        analytics = ClaimsAnalytics(os.path.join(BASE_DIR, 'synthetic_healthcare_claims_dataset.csv'))
-        return {
-            "procedures": analytics.get_top_procedures_by_denial_rate(top_n=20)
-        }
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error generating procedure analytics: {str(e)}"
-        )
+    """
+    Get detailed procedure-level denial analytics.
+    
+    **Cached Response:** Results are cached for 5 minutes. Cache is invalidated
+    when the model is retrained.
+    
+    Returns:
+        dict containing:
+            - procedures: Top 20 procedures ranked by denial rate
+    
+    Raises:
+        HTTPException: 500 if procedure analytics generation fails
+    """
+    def fetch_procedures():
+        try:
+            from claims_analytics import ClaimsAnalytics
+            
+            analytics = ClaimsAnalytics(os.path.join(BASE_DIR, 'synthetic_healthcare_claims_dataset.csv'))
+            result = {
+                "procedures": analytics.get_top_procedures_by_denial_rate(top_n=20)
+            }
+            logger.info("Procedure analytics generated successfully")
+            return result
+        except Exception as e:
+            logger.error(f"Error generating procedure analytics: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error generating procedure analytics: {str(e)}"
+            )
+    
+    return get_cached_analytics('analytics_procedures', fetch_procedures)
 
 @app.get("/analytics/payers")
 def get_payers_analytics():
-    """Get payer-level analytics"""
-    try:
-        from claims_analytics import ClaimsAnalytics
-        
-        analytics = ClaimsAnalytics(os.path.join(BASE_DIR, 'synthetic_healthcare_claims_dataset.csv'))
-        return {
-            "payers": analytics.get_denial_rate_by_payer(),
-            "providers": analytics.get_denial_rate_by_provider_type()
-        }
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error generating payer analytics: {str(e)}"
-        )
+    """
+    Get insurance company (payer) denial rate analysis.
+    
+    **Cached Response:** Results are cached for 5 minutes. Cache is invalidated
+    when the model is retrained.
+    
+    Returns:
+        dict containing:
+            - payers: List of payers with their denial statistics
+    
+    Raises:
+        HTTPException: 500 if payer analytics generation fails
+    """
+    def fetch_payers():
+        try:
+            from claims_analytics import ClaimsAnalytics
+            
+    def fetch_payers():
+        try:
+            from claims_analytics import ClaimsAnalytics
+            
+            analytics = ClaimsAnalytics(os.path.join(BASE_DIR, 'synthetic_healthcare_claims_dataset.csv'))
+            result = {
+                "payers": analytics.get_denial_rate_by_payer(),
+                "providers": analytics.get_denial_rate_by_provider_type()
+            }
+            logger.info("Payer analytics generated successfully")
+            return result
+        except Exception as e:
+            logger.error(f"Error generating payer analytics: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error generating payer analytics: {str(e)}"
+            )
+    
+    return get_cached_analytics('analytics_payers', fetch_payers)
 
 @app.get("/shap/status")
 def get_shap_status():
-    """Check if SHAP explainer is available"""
+    """
+    Check SHAP explainability availability.
+    
+    Returns:
+        dict containing:
+            - shap_available: Whether SHAP library is installed
+            - explainer_loaded: Whether SHAP explainer is currently initialized
+            - message: Human readable status message
+    """
     return {
         "shap_available": SHAP_AVAILABLE,
         "explainer_loaded": explainer is not None,
@@ -483,7 +844,28 @@ def get_shap_explanation(request: ClaimPredictionRequest) -> Dict[str, Any]:
     """
     Get detailed SHAP explanation for a claim prediction.
     
-    Returns detailed feature contribution analysis using SHAP values.
+    **Requires SHAP:** The SHAP library must be installed (installed by default).
+    
+    This endpoint provides detailed feature contribution analysis for individual
+    predictions using SHAP (SHapley Additive exPlanations) values. SHAP values
+    explain how each input feature contributed to the prediction, improving
+    model interpretability and trust.
+    
+    Args:
+        request: ClaimPredictionRequest with claim details to explain
+    
+    Returns:
+        dict containing:
+            - denial_probability: Predicted denial probability (0-1)
+            - risk_level: Risk categorization (Low/Medium/High)
+            - feature_contributions: Detailed SHAP values for each feature
+            - base_value: Model's baseline prediction
+            - shap_available: Whether SHAP analysis was successful
+    
+    Raises:
+        HTTPException: 400 if SHAP library is not installed
+        HTTPException: 500 if explanation generation fails
+    """
     """
     global explainer
     if not explainer and SHAP_AVAILABLE:
@@ -571,26 +953,53 @@ def get_shap_explanation(request: ClaimPredictionRequest) -> Dict[str, Any]:
 
 @app.get("/history")
 def get_history(limit: int = 20):
-    """Get last N predictions from the database"""
+    """
+    Get prediction history from the database.
+    
+    Retrieves recent claim predictions stored in the database, showing
+    the most recent predictions first. Useful for auditing and analysis.
+    
+    Query Parameters:
+        limit: Maximum number of historical records to return (default: 20, max: 100)
+    
+    Returns:
+        list of dict containing:
+            - id: Unique prediction ID
+            - payer: Insurance company name
+            - insurance_type: Type of insurance
+            - claim_amount: Amount claimed in dollars
+            - denial_probability: Predicted denial probability
+            - risk_level: Risk categorization
+            - created_at: Timestamp of prediction
+    
+    Raises:
+        HTTPException: 500 if database query fails
+    """
     try:
+        # Limit to 100 maximum to prevent large data transfers
+        limit = min(limit, 100)
+        
         db = SessionLocal()
         records = db.query(PredictionHistory)\
                     .order_by(PredictionHistory.created_at.desc())\
                     .limit(limit).all()
         db.close()
+        
+        logger.info(f"Retrieved {len(records)} prediction history records")
         return [{"id": r.id, "payer": r.payer, "insurance_type": r.insurance_type,
                  "claim_amount": r.claim_amount, "denial_probability": r.denial_probability,
                  "risk_level": r.risk_level, "created_at": str(r.created_at)} for r in records]
     except Exception as e:
+        logger.error(f"Error retrieving prediction history: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
-    print("\n" + "="*60)
-    print("[STARTUP] Starting Claim Denial Prediction API...")
-    print(f"[INFO] Using Port: {port}")
-    print(f"[INFO] Dashboard: http://localhost:{port}")
-    print(f"[INFO] API Docs: http://localhost:{port}/docs")
-    print("="*60 + "\n")
+    logger.info("="*60)
+    logger.info("Starting Claim Denial Prediction API...")
+    logger.info(f"Using Port: {port}")
+    logger.info(f"Dashboard: http://localhost:{port}")
+    logger.info(f"API Docs: http://localhost:{port}/docs")
+    logger.info("="*60)
     uvicorn.run(app, host="0.0.0.0", port=port)

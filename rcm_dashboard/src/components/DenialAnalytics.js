@@ -39,11 +39,11 @@ const DenialAnalytics = ({ data, analytics }) => {
   // Denial trends by payer
   // Generate unique colours for any number of payers
   const PALETTE_BG = [
-    'rgba(59,130,246,0.6)',   'rgba(110,65,228,0.6)',  'rgba(236,72,153,0.6)',
-    'rgba(249,115,22,0.6)',   'rgba(34,197,94,0.6)',   'rgba(20,184,166,0.6)',
-    'rgba(245,158,11,0.6)',   'rgba(239,68,68,0.6)',   'rgba(99,102,241,0.6)',
-    'rgba(16,185,129,0.6)',   'rgba(217,70,239,0.6)',  'rgba(251,191,36,0.6)',
-    'rgba(14,165,233,0.6)',   'rgba(168,85,247,0.6)',
+    'rgba(15, 76, 129, 0.6)',   'rgba(0, 107, 146, 0.6)',  'rgba(16, 185, 129, 0.6)',
+    'rgba(245, 158, 11, 0.6)',   'rgba(239, 68, 68, 0.6)',   'rgba(59, 130, 246, 0.6)',
+    'rgba(168, 85, 247, 0.6)',   'rgba(217, 70, 239, 0.6)',  'rgba(251, 191, 36, 0.6)',
+    'rgba(14, 165, 233, 0.6)',   'rgba(236, 72, 153, 0.6)',  'rgba(100, 116, 139, 0.6)',
+    'rgba(249, 115, 22, 0.6)',   'rgba(20, 184, 166, 0.6)',
   ];
   const PALETTE_BORDER = PALETTE_BG.map((c) => c.replace('0.6', '1'));
   const payerCount = Object.keys(resolvedData.denialsByPayer).length;
@@ -70,13 +70,13 @@ const DenialAnalytics = ({ data, analytics }) => {
       {
         label: 'Denial Rate (%)',
         data: Object.values(resolvedData.denialsByProcedure).map((v) => v * 100),
-        borderColor: 'rgba(59, 130, 246, 1)',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        borderColor: 'rgba(15, 76, 129, 1)',
+        backgroundColor: 'rgba(15, 76, 129, 0.08)',
         borderWidth: 3,
         fill: true,
         tension: 0.4,
         pointRadius: 6,
-        pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+        pointBackgroundColor: 'rgba(15, 76, 129, 1)',
         pointBorderColor: '#fff',
         pointBorderWidth: 2,
       },
@@ -95,16 +95,16 @@ const DenialAnalytics = ({ data, analytics }) => {
           'Hospital': 0.21, 'Specialist': 0.34, 'Clinic': 0.27, 'Diagnostic Center': 0.41,
         }).map((v) => v * 100),
         backgroundColor: [
-          'rgba(34,197,94,0.6)',
-          'rgba(249,115,22,0.6)',
-          'rgba(59,130,246,0.6)',
-          'rgba(239,68,68,0.6)',
+          'rgba(16, 185, 129, 0.6)',
+          'rgba(245, 158, 11, 0.6)',
+          'rgba(15, 76, 129, 0.6)',
+          'rgba(239, 68, 68, 0.6)',
         ],
         borderColor: [
-          'rgba(34,197,94,1)',
-          'rgba(249,115,22,1)',
-          'rgba(59,130,246,1)',
-          'rgba(239,68,68,1)',
+          'rgba(16, 185, 129, 1)',
+          'rgba(245, 158, 11, 1)',
+          'rgba(15, 76, 129, 1)',
+          'rgba(239, 68, 68, 1)',
         ],
         borderWidth: 2,
         borderRadius: 6,
@@ -120,13 +120,13 @@ const DenialAnalytics = ({ data, analytics }) => {
         label: 'Number of Claims',
         data: Object.values(resolvedData.riskDistribution),
         backgroundColor: [
-          'rgba(34, 197, 94, 0.7)',
-          'rgba(249, 115, 22, 0.7)',
+          'rgba(16, 185, 129, 0.7)',
+          'rgba(245, 158, 11, 0.7)',
           'rgba(239, 68, 68, 0.7)',
         ],
         borderColor: [
-          'rgba(34, 197, 94, 1)',
-          'rgba(249, 115, 22, 1)',
+          'rgba(16, 185, 129, 1)',
+          'rgba(245, 158, 11, 1)',
           'rgba(239, 68, 68, 1)',
         ],
         borderWidth: 2,
@@ -141,32 +141,32 @@ const DenialAnalytics = ({ data, analytics }) => {
       legend: {
         position: 'top',
         labels: {
-          color: '#e5e7eb',
+          color: '#0F4C81',
           font: { size: 12, weight: 'bold' },
           padding: 15,
         },
       },
       tooltip: {
-        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-        titleColor: '#e5e7eb',
-        bodyColor: '#e5e7eb',
-        borderColor: 'rgba(34, 211, 238, 0.5)',
+        backgroundColor: 'rgba(30, 41, 59, 0.95)',
+        titleColor: '#fff',
+        bodyColor: '#f1f5f9',
+        borderColor: 'rgba(15, 76, 129, 0.5)',
         borderWidth: 1,
       },
     },
     scales: {
       y: {
         ticks: {
-          color: '#9ca3af',
+          color: '#6b7280',
           font: { size: 11 },
         },
         grid: {
-          color: 'rgba(255, 255, 255, 0.05)',
+          color: 'rgba(156, 163, 175, 0.1)',
         },
       },
       x: {
         ticks: {
-          color: '#9ca3af',
+          color: '#6b7280',
           font: { size: 11 },
         },
         grid: {
@@ -180,61 +180,61 @@ const DenialAnalytics = ({ data, analytics }) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <div className="p-3 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 backdrop-blur-xl rounded-lg border border-cyan-400/50">
+        <div className="p-3 bg-gradient-to-r from-blue-50 to-teal-50 rounded-lg border border-blue-200">
           <span className="text-3xl">📊</span>
         </div>
         <div>
-          <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 to-blue-300">
+          <h2 className="text-3xl font-bold text-blue-900">
             Analytics & Insights
           </h2>
-          <p className="text-sm text-white/60">Real-time denial trends and claim analytics</p>
+          <p className="text-sm text-gray-600">Real-time denial trends and claim analytics</p>
         </div>
       </div>
 
       {/* Top Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="group backdrop-blur-xl bg-gradient-to-br from-green-500/20 to-green-600/10 border border-green-400/30 rounded-xl p-6 hover:border-green-400/60 transition-all duration-300 hover:shadow-lg hover:shadow-green-500/20">
+        <div className="group bg-green-50 border border-green-200 rounded-xl p-6 hover:border-green-400 transition-all duration-300 hover:shadow-lg hover:shadow-green-100">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-green-300 text-sm font-semibold">Average Denial Rate</p>
+            <p className="text-green-700 text-sm font-semibold">Average Denial Rate</p>
             <span className="text-2xl">📉</span>
           </div>
-          <p className="text-4xl font-bold text-green-300">
+          <p className="text-4xl font-bold text-green-700">
             {(
               Object.values(resolvedData.denialsByPayer).reduce((a, b) => a + b, 0) / 
               Object.values(resolvedData.denialsByPayer).length * 100
             ).toFixed(1)}%
           </p>
-          <p className="text-xs text-white/50 mt-2">Across all payers</p>
+          <p className="text-xs text-green-600 mt-2">Across all payers</p>
         </div>
 
-        <div className="group backdrop-blur-xl bg-gradient-to-br from-red-500/20 to-red-600/10 border border-red-400/30 rounded-xl p-6 hover:border-red-400/60 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/20">
+        <div className="group bg-red-50 border border-red-200 rounded-xl p-6 hover:border-red-400 transition-all duration-300 hover:shadow-lg hover:shadow-red-100">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-red-300 text-sm font-semibold">High Risk Claims</p>
+            <p className="text-red-700 text-sm font-semibold">High Risk Claims</p>
             <span className="text-2xl">⚠️</span>
           </div>
-          <p className="text-4xl font-bold text-red-300">
+          <p className="text-4xl font-bold text-red-700">
             {resolvedData.riskDistribution.High}
           </p>
-          <p className="text-xs text-white/50 mt-2">Requires attention</p>
+          <p className="text-xs text-red-600 mt-2">Requires attention</p>
         </div>
 
-        <div className="group backdrop-blur-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-400/30 rounded-xl p-6 hover:border-purple-400/60 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20">
+        <div className="group bg-blue-50 border border-blue-200 rounded-xl p-6 hover:border-blue-400 transition-all duration-300 hover:shadow-lg hover:shadow-blue-100">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-purple-300 text-sm font-semibold">Total Claims</p>
+            <p className="text-blue-700 text-sm font-semibold">Total Claims</p>
             <span className="text-2xl">📋</span>
           </div>
-          <p className="text-4xl font-bold text-purple-300">
+          <p className="text-4xl font-bold text-blue-700">
             {Object.values(resolvedData.riskDistribution).reduce((a, b) => a + b, 0).toLocaleString()}
           </p>
-          <p className="text-xs text-white/50 mt-2">In database</p>
+          <p className="text-xs text-blue-600 mt-2">In database</p>
         </div>
 
-        <div className="group backdrop-blur-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-400/30 rounded-xl p-6 hover:border-emerald-400/60 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20">
+        <div className="group bg-emerald-50 border border-emerald-200 rounded-xl p-6 hover:border-emerald-400 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-100">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-emerald-300 text-sm font-semibold">Approval Rate</p>
+            <p className="text-emerald-700 text-sm font-semibold">Approval Rate</p>
             <span className="text-2xl">✅</span>
           </div>
-          <p className="text-4xl font-bold text-emerald-300">
+          <p className="text-4xl font-bold text-emerald-700">
             {(
               100 - (
                 Object.values(resolvedData.denialsByPayer).reduce((a, b) => a + b, 0) / 
@@ -242,35 +242,35 @@ const DenialAnalytics = ({ data, analytics }) => {
               )
             ).toFixed(1)}%
           </p>
-          <p className="text-xs text-white/50 mt-2">Expected success</p>
+          <p className="text-xs text-emerald-600 mt-2">Expected success</p>
         </div>
       </div>
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Denial by Payer */}
-        <div className="group backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6 hover:border-white/40 transition-all duration-300 hover:shadow-lg hover:shadow-white/10 hover:bg-white/[0.12]">
+        <div className="group bg-white border border-gray-200 rounded-xl p-6 hover:border-gray-400 transition-all duration-300 hover:shadow-lg hover:shadow-blue-100">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">🏦</span>
-            <h3 className="text-lg font-bold text-cyan-300">Denial by Payer</h3>
+            <h3 className="text-lg font-bold text-blue-900">Denial by Payer</h3>
           </div>
           <Bar data={payerChartData} options={chartOptions} height={300} />
         </div>
 
         {/* Denial by Procedure */}
-        <div className="group backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6 hover:border-white/40 transition-all duration-300 hover:shadow-lg hover:shadow-white/10 hover:bg-white/[0.12]">
+        <div className="group bg-white border border-gray-200 rounded-xl p-6 hover:border-gray-400 transition-all duration-300 hover:shadow-lg hover:shadow-blue-100">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">🔬</span>
-            <h3 className="text-lg font-bold text-cyan-300">Procedure Trends</h3>
+            <h3 className="text-lg font-bold text-blue-900">Procedure Trends</h3>
           </div>
           <Line data={procedureChartData} options={chartOptions} height={300} />
         </div>
 
         {/* Risk Distribution */}
-        <div className="group backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6 hover:border-white/40 transition-all duration-300 hover:shadow-lg hover:shadow-white/10 hover:bg-white/[0.12]">
+        <div className="group bg-white border border-gray-200 rounded-xl p-6 hover:border-gray-400 transition-all duration-300 hover:shadow-lg hover:shadow-blue-100">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">📊</span>
-            <h3 className="text-lg font-bold text-cyan-300">Risk Distribution</h3>
+            <h3 className="text-lg font-bold text-blue-900">Risk Distribution</h3>
           </div>
           <Doughnut data={riskDistributionData} options={chartOptions} height={300} />
         </div>
@@ -278,12 +278,12 @@ const DenialAnalytics = ({ data, analytics }) => {
 
       {/* Provider Chart — full width row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="group backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6 hover:border-white/40 transition-all duration-300 hover:shadow-lg hover:shadow-white/10 hover:bg-white/[0.12]">
+        <div className="group bg-white border border-gray-200 rounded-xl p-6 hover:border-gray-400 transition-all duration-300 hover:shadow-lg hover:shadow-blue-100">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">🏢</span>
-            <h3 className="text-lg font-bold text-cyan-300">Denial by Provider Type</h3>
+            <h3 className="text-lg font-bold text-blue-900">Denial by Provider Type</h3>
           </div>
-          <p className="text-xs text-white/50 mb-4">Denial rate breakdown across healthcare provider categories</p>
+          <p className="text-xs text-gray-600 mb-4">Denial rate breakdown across healthcare provider categories</p>
           <Bar data={providerChartData} options={{
             ...chartOptions,
             plugins: {

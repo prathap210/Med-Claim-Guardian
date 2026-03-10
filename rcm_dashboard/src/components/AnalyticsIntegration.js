@@ -8,7 +8,7 @@ import axios from 'axios';
  * This demonstrates fetching analytics from the API and displaying them in various ways
  */
 
-const API_URL = 'http://localhost:8000';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 // Hook to fetch analytics data
 export const useAnalytics = () => {

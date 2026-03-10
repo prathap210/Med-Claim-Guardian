@@ -7,10 +7,11 @@ import PayerHeatmap from './components/PayerHeatmap';
 import ProofOfValue from './components/ProofOfValue';
 import ChatAssistant from './components/ChatAssistant';
 import Sidebar from './components/Sidebar';
+import ErrorBoundary from './components/ErrorBoundary';
 import axios from 'axios';
 import './premium.css';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 function App() {
   const [prediction, setPrediction] = useState(null);
@@ -152,14 +153,11 @@ function App() {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'linear-gradient(160deg, #0F172A 0%, #1E293B 60%, #0F172A 100%)', fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
+    <ErrorBoundary>
+      <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--color-light-bg)', fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
 
-      {/* ── Ambient background glows ── */}
-      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
-        <div style={{ position: 'absolute', top: '-15%', left: '-10%', width: 600, height: 600, background: 'radial-gradient(circle, rgba(6,182,212,0.055) 0%, transparent 65%)', borderRadius: '50%' }} />
-        <div style={{ position: 'absolute', bottom: '-15%', right: '-10%', width: 600, height: 600, background: 'radial-gradient(circle, rgba(99,102,241,0.055) 0%, transparent 65%)', borderRadius: '50%' }} />
-        <div style={{ position: 'absolute', top: '40%', left: '40%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(59,130,246,0.03) 0%, transparent 70%)', borderRadius: '50%' }} />
-      </div>
+      {/* ── Clean minimal background ── */}
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0, background: 'linear-gradient(135deg, var(--color-light-bg) 0%, #f1f8fb 100%)' }} />
 
       {/* ══════════════════════════════════════════
           SIDEBAR
@@ -188,27 +186,20 @@ function App() {
         {/* ── Top Bar ── */}
         <header style={{
           height: 68,
-          background: 'rgba(8,14,26,0.75)',
-          borderBottom: '1px solid rgba(34,211,238,0.07)',
-          backdropFilter: 'blur(28px) saturate(1.6)',
-          WebkitBackdropFilter: 'blur(28px) saturate(1.6)',
+          background: 'var(--color-white)',
+          borderBottom: '1px solid var(--color-gray-200)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 24px 0 20px',
+          padding: '0 24px',
           position: 'sticky',
           top: 0,
           zIndex: 50,
           flexShrink: 0,
-          boxShadow: '0 1px 0 rgba(34,211,238,0.06), 0 4px 24px rgba(0,0,0,0.4)',
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
         }}>
 
-          {/* Bottom shimmer line */}
-          <div style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0, height: 1,
-            background: 'linear-gradient(90deg, transparent, rgba(34,211,238,0.22) 30%, rgba(99,102,241,0.18) 70%, transparent)',
-            pointerEvents: 'none',
-          }} />
+          {/* Bottom clean border */}
 
           {/* ── LEFT: sidebar toggle + breadcrumb ── */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -219,9 +210,9 @@ function App() {
               title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               style={{
                 width: 36, height: 36, borderRadius: 9,
-                border: '1px solid rgba(255,255,255,0.06)',
-                background: 'rgba(255,255,255,0.02)',
-                color: '#334155',
+                border: '1px solid rgba(15, 76, 129, 0.12)',
+                background: 'rgba(15, 76, 129, 0.04)',
+                color: 'var(--color-medical-blue)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer',
                 flexShrink: 0,
@@ -237,18 +228,17 @@ function App() {
             </button>
 
             {/* Divider */}
-            <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.06)', flexShrink: 0 }} />
+            <div style={{ width: 1, height: 28, background: 'rgba(15, 76, 129, 0.1)', flexShrink: 0 }} />
 
             {/* Page icon + title + breadcrumb */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
               {/* Icon bubble */}
               <div style={{
                 width: 34, height: 34, borderRadius: 9, flexShrink: 0,
-                background: 'rgba(34,211,238,0.09)',
-                border: '1px solid rgba(34,211,238,0.18)',
+                background: 'rgba(15, 76, 129, 0.08)',
+                border: '1px solid rgba(15, 76, 129, 0.16)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#22D3EE',
-                boxShadow: '0 0 12px rgba(34,211,238,0.12)',
+                color: 'var(--color-medical-blue)',
               }}>
                 {PAGE_META[activeTab]?.icon}
               </div>
@@ -264,7 +254,7 @@ function App() {
                   </span>
                 </div>
                 {/* Page title — unique text, not repeated from breadcrumb */}
-                <div style={{ color: '#E2E8F0', fontWeight: 700, fontSize: 15.5, letterSpacing: '-0.4px', lineHeight: 1 }}>
+                <div style={{ color: 'var(--color-medical-blue)', fontWeight: 700, fontSize: 15.5, letterSpacing: '-0.4px', lineHeight: 1 }}>
                   {PAGE_META[activeTab]?.title}
                 </div>
               </div>
@@ -320,16 +310,16 @@ function App() {
             </div>
 
             {/* Divider */}
-            <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.06)', margin: '0 4px' }} />
+            <div style={{ width: 1, height: 28, background: 'rgba(15, 76, 129, 0.1)', margin: '0 4px' }} />
 
             {/* Notification bell */}
             <button
               title="Notifications"
               style={{
                 width: 36, height: 36, borderRadius: 9, position: 'relative',
-                border: '1px solid rgba(255,255,255,0.06)',
-                background: 'rgba(255,255,255,0.02)',
-                color: '#334155',
+                border: '1px solid rgba(15, 76, 129, 0.12)',
+                background: 'rgba(15, 76, 129, 0.04)',
+                color: 'var(--color-medical-blue)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer',
                 transition: 'all 0.18s ease',
@@ -355,8 +345,8 @@ function App() {
               title="Team HEIST"
               style={{
                 height: 36, borderRadius: 9, padding: '0 10px 0 6px',
-                border: '1px solid rgba(34,211,238,0.12)',
-                background: 'rgba(34,211,238,0.05)',
+                border: '1px solid rgba(15, 76, 129, 0.12)',
+                background: 'rgba(15, 76, 129, 0.05)',
                 display: 'flex', alignItems: 'center', gap: 8,
                 cursor: 'pointer',
                 transition: 'all 0.18s ease',
@@ -366,11 +356,10 @@ function App() {
               {/* Avatar */}
               <div style={{
                 width: 26, height: 26, borderRadius: 7,
-                background: 'linear-gradient(135deg, #06B6D4, #6366F1)',
+                background: 'linear-gradient(135deg, var(--color-accent-teal), var(--color-medical-blue))',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 11, fontWeight: 800, color: '#fff',
                 flexShrink: 0,
-                boxShadow: '0 0 10px rgba(6,182,212,0.35)',
               }}>TH</div>
               {/* Name + role */}
               <div style={{ textAlign: 'left' }}>
@@ -405,26 +394,25 @@ function App() {
         </header>
 
         {/* ── Page Content ── */}
-        <main className="app-main" style={{ flex: 1, padding: '28px 28px 20px', overflowX: 'hidden' }}>
+        <main className="app-main" style={{ flex: 1, padding: '32px 40px 28px', overflowX: 'hidden', background: '#fafbfc' }}>
 
           {/* ── Quick Predict Tab ── */}
           {activeTab === 'predict' && (
-            <div className="predict-grid" style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 22, alignItems: 'start' }}>
+            <div className="predict-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'start', maxWidth: '100%' }}>
 
               {/* Form card */}
               <div style={{
-                background: 'rgba(15,23,42,0.8)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 16,
-                padding: '24px',
-                backdropFilter: 'blur(16px)',
-                boxShadow: '0 4px 32px rgba(0,0,0,0.4)',
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: 14,
+                padding: '32px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22, paddingBottom: 18, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 10, background: 'linear-gradient(135deg,#3B82F6,#6366F1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>📋</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28, paddingBottom: 24, borderBottom: '1px solid #e2e8f0' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg,#0F4C81,#008BA3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0, color: '#fff', fontWeight: 700 }}>📋</div>
                   <div>
-                    <div style={{ color: '#F1F5F9', fontWeight: 700, fontSize: 15 }}>Claim Details</div>
-                    <div style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>Enter patient &amp; claim information</div>
+                    <div style={{ color: '#0F4C81', fontWeight: 700, fontSize: 17 }}>Claim Information</div>
+                    <div style={{ color: '#7c8ba0', fontSize: 13.5, marginTop: 4 }}>Enter patient and claim details</div>
                   </div>
                 </div>
                 <ClaimForm onSubmit={handleSubmit} isLoading={loading} onReset={() => { setPrediction(null); setError(null); }} />
@@ -434,23 +422,21 @@ function App() {
               <div>
                 {/* Loading */}
                 {loading && (
-                  <div style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 380, backdropFilter: 'blur(16px)', boxShadow: '0 4px 32px rgba(0,0,0,0.4)' }}>
-                    <div style={{ width: 60, height: 60, borderRadius: '50%', border: '3px solid #06B6D4', borderTopColor: 'transparent', animation: 'appSpin 0.9s linear infinite', marginBottom: 22 }} />
-                    <div style={{ color: '#F1F5F9', fontWeight: 600, fontSize: 17 }}>Analyzing Claim...</div>
-                    <div style={{ color: '#64748B', fontSize: 13, marginTop: 8, textAlign: 'center', maxWidth: 300 }}>AI is processing your data with SHAP explainability</div>
+                  <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '64px 36px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 500, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                    <div style={{ width: 56, height: 56, borderRadius: '50%', border: '3px solid #e2e8f0', borderTopColor: '#0F4C81', animation: 'appSpin 0.9s linear infinite', marginBottom: 28 }} />
+                    <div style={{ color: '#0F4C81', fontWeight: 600, fontSize: 16 }}>Analyzing Claim...</div>
+                    <div style={{ color: '#7c8ba0', fontSize: 13.5, marginTop: 12, textAlign: 'center', maxWidth: 320 }}>Running denial prediction with SHAP analysis</div>
                   </div>
                 )}
 
                 {/* Error */}
                 {!loading && error && (
-                  <div style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(239,68,68,0.25)', borderLeft: '4px solid #EF4444', borderRadius: 16, padding: '22px 24px', backdropFilter: 'blur(16px)' }}>
-                    <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 9, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                      </div>
-                      <div>
-                        <div style={{ color: '#FCA5A5', fontWeight: 700, fontSize: 14, marginBottom: 5 }}>Prediction Failed</div>
-                        <div style={{ color: '#94A3B8', fontSize: 12.5, lineHeight: 1.5 }}>{error}</div>
+                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderLeft: '4px solid #dc2626', borderRadius: 14, padding: '28px 32px', boxShadow: '0 1px 3px rgba(220,38,38,0.06)' }}>
+                    <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 12, background: '#fee2e2', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 22 }}>⚠️</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ color: '#991b1b', fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Prediction Error</div>
+                        <div style={{ color: '#7f1d1d', fontSize: 13.5, lineHeight: 1.6 }}>{error}</div>
                       </div>
                     </div>
                   </div>
@@ -464,44 +450,45 @@ function App() {
                 {/* Empty state — shown only before any submission */}
                 {!loading && !error && !prediction && (
                   <div style={{
-                    background: 'rgba(15,23,42,0.6)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: 16,
-                    minHeight: 380,
+                    background: '#ffffff',
+                    border: '1.5px dashed #e2e8f0',
+                    borderRadius: 14,
+                    minHeight: 500,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
                     textAlign: 'center',
-                    padding: '40px 32px',
+                    padding: '56px 44px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
                   }}>
                     {/* Icon ring */}
                     <div style={{
-                      width: 72, height: 72, borderRadius: '50%',
-                      border: '1.5px solid rgba(34,211,238,0.18)',
+                      width: 88, height: 88, borderRadius: '50%',
+                      border: '2px solid #0F4C81',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      marginBottom: 22,
-                      background: 'rgba(34,211,238,0.04)',
+                      marginBottom: 28,
+                      background: 'rgba(15, 76, 129, 0.05)',
                       position: 'relative',
                     }}>
                       <div style={{
-                        position: 'absolute', inset: -6, borderRadius: '50%',
-                        border: '1px dashed rgba(34,211,238,0.1)',
+                        position: 'absolute', inset: -10, borderRadius: '50%',
+                        border: '1px dashed rgba(15, 76, 129, 0.15)',
                       }} />
-                      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(34,211,238,0.45)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0F4C81" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/>
                       </svg>
                     </div>
-                    <div style={{ color: '#475569', fontWeight: 600, fontSize: 15, marginBottom: 8 }}>
-                      No prediction yet
+                    <div style={{ color: '#1f2937', fontWeight: 700, fontSize: 17, marginBottom: 12 }}>
+                      Submit a Claim for Analysis
                     </div>
-                    <div style={{ color: '#2D4A5E', fontSize: 12.5, maxWidth: 260, lineHeight: 1.65 }}>
-                      Complete the claim form and click <span style={{ color: '#22D3EE', fontWeight: 700 }}>Predict</span> to run AI analysis
+                    <div style={{ color: '#7c8ba0', fontSize: 14, maxWidth: 300, lineHeight: 1.8 }}>
+                      Fill in the claim details and click <span style={{ color: '#0F4C81', fontWeight: 600 }}>Predict</span> to run AI-powered denial risk assessment
                     </div>
                     {/* Hint arrow */}
-                    <div style={{ marginTop: 24, display: 'flex', alignItems: 'center', gap: 6, color: '#1E3A52', fontSize: 11 }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                      Fill in the form on the left
+                    <div style={{ marginTop: 32, display: 'flex', alignItems: 'center', gap: 10, color: '#a0aec0', fontSize: 13 }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                      Complete form on left
                     </div>
                   </div>
                 )}
@@ -511,10 +498,10 @@ function App() {
 
           {/* ── Analytics Tab ── */}
           {activeTab === 'analytics' && (
-            <div style={{ background: 'rgba(15,23,42,0.6)', borderRadius: 16, border: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+            <div style={{ background: '#ffffff', borderRadius: 14, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', minHeight: 600 }}>
               {analytics
                 ? <DenialAnalytics data={analytics} analytics={analytics} />
-                : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 256, color: '#06B6D4', fontSize: 17 }}>Loading analytics data...</div>
+                : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 600, color: '#0F4C81', fontSize: 15, fontWeight: 500 }}>Generating analytics...</div>
               }
             </div>
           )}
@@ -531,9 +518,9 @@ function App() {
         </main>
 
         {/* ── Footer ── */}
-        <footer style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '13px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <span style={{ color: '#334155', fontSize: 11.5 }}>Med-Claim Guardian · Powered by SHAP AI Explainability · GlitchCon 2.0</span>
-          <span style={{ color: '#334155', fontSize: 11.5 }}>VIT Chennai · ECDS · Team HEIST</span>
+        <footer style={{ borderTop: '1px solid #e2e8f0', padding: '16px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, background: '#fafbfc', fontSize: '12px', color: '#7c8ba0' }}>
+          <span>Med-Claim Guardian · AI Denial Risk Prediction · Powered by SHAP</span>
+          <span>Team HEIST</span>
         </footer>
       </div>
 
@@ -550,19 +537,20 @@ function App() {
         /* ── Responsive predict layout ─────────────────────── */
         .predict-grid {
           display: grid;
-          grid-template-columns: 360px 1fr;
-          gap: 22px;
+          grid-template-columns: 380px 1fr;
+          gap: 28px;
           align-items: start;
         }
         @media (max-width: 1024px) {
-          .predict-grid { grid-template-columns: 320px 1fr; gap: 16px; }
+          .predict-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
+          .app-main { padding: 28px 32px 24px !important; }
         }
         @media (max-width: 820px) {
-          .predict-grid { grid-template-columns: 1fr; gap: 20px; }
-          .app-main { padding: 18px 16px 16px !important; }
+          .predict-grid { grid-template-columns: 1fr; gap: 24px; }
+          .app-main { padding: 24px 20px 18px !important; }
         }
         @media (max-width: 560px) {
-          .app-main { padding: 12px 10px 12px !important; }
+          .app-main { padding: 16px 14px 12px !important; }
         }
 
         /* ── Responsive sidebar shift ───────────────────────── */
@@ -570,7 +558,8 @@ function App() {
           .app-content { margin-left: 0 !important; }
         }
       `}</style>
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }
 

@@ -1,7 +1,7 @@
 {
-  "name": "rcm-denial-prediction-dashboard",
+  "name": "med-claim-guardian",
   "version": "1.0.0",
-  "description": "React dashboard for Revenue Cycle Management Denial Prediction System",
+  "description": "Med-Claim Guardian: AI-powered Insurance Claim Denial Prediction & Prevention",
   "private": true,
   "dependencies": {
     "react": "^18.2.0",

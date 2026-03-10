@@ -2,25 +2,25 @@ import React from 'react';
 
 const RISK_CFG = {
   Low: {
-    from: '#15803D', to: '#065F46',
-    accent: '#4ADE80', glow: 'rgba(34,197,94,0.4)',
-    tileBorder: 'rgba(74,222,128,0.35)', tileBg: 'rgba(74,222,128,0.12)',
-    badgeBg: 'rgba(34,197,94,0.15)', badgeBorder: 'rgba(74,222,128,0.3)',
-    label: 'APPROVE & PROCESS', action: 'Auto-Approve Eligible', icon: '✅',
+    from: '#047857', to: '#065F46',
+    accent: '#10b981', glow: 'rgba(16, 185, 129, 0.25)',
+    tileBorder: 'rgba(16, 185, 129, 0.3)', tileBg: 'rgba(16, 185, 129, 0.08)',
+    badgeBg: 'rgba(16, 185, 129, 0.12)', badgeBorder: 'rgba(16, 185, 129, 0.25)',
+    label: 'LOW RISK', action: 'Approve & Process', icon: '✅',
   },
   Medium: {
-    from: '#B45309', to: '#92400E',
-    accent: '#FCD34D', glow: 'rgba(245,158,11,0.4)',
-    tileBorder: 'rgba(252,211,77,0.35)', tileBg: 'rgba(252,211,77,0.1)',
-    badgeBg: 'rgba(245,158,11,0.15)', badgeBorder: 'rgba(252,211,77,0.3)',
-    label: 'REVIEW REQUIRED', action: 'Manual Review Needed', icon: '⚠️',
+    from: '#d97706', to: '#92400e',
+    accent: '#f59e0b', glow: 'rgba(245, 158, 11, 0.25)',
+    tileBorder: 'rgba(245, 158, 11, 0.3)', tileBg: 'rgba(245, 158, 11, 0.08)',
+    badgeBg: 'rgba(245, 158, 11, 0.12)', badgeBorder: 'rgba(245, 158, 11, 0.25)',
+    label: 'MEDIUM RISK', action: 'Required Review', icon: '⚠️',
   },
   High: {
-    from: '#B91C1C', to: '#881337',
-    accent: '#F87171', glow: 'rgba(239,68,68,0.4)',
-    tileBorder: 'rgba(248,113,113,0.35)', tileBg: 'rgba(248,113,113,0.1)',
-    badgeBg: 'rgba(239,68,68,0.15)', badgeBorder: 'rgba(248,113,113,0.3)',
-    label: 'PRIORITY ESCALATION', action: 'Urgent Action Required', icon: '🚨',
+    from: '#dc2626', to: '#7c2d12',
+    accent: '#ef4444', glow: 'rgba(239, 68, 68, 0.25)',
+    tileBorder: 'rgba(239, 68, 68, 0.3)', tileBg: 'rgba(239, 68, 68, 0.08)',
+    badgeBg: 'rgba(239, 68, 68, 0.12)', badgeBorder: 'rgba(239, 68, 68, 0.25)',
+    label: 'HIGH RISK', action: 'Escalate Immediately', icon: '🚨',
   },
 };
 
@@ -63,17 +63,16 @@ const PredictionResult = ({ prediction }) => {
           margin-bottom: 8px;
         }
         .pr-card {
-          background: rgba(15,23,42,0.72);
+          background: rgba(255, 255, 255, 0.95);
           border-radius: 14px;
           padding: 18px;
-          backdrop-filter: blur(12px);
         }
         .pr-stat-label {
           font-size: 10px;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.1em;
-          color: #64748B;
+          color: '#6b7280';
           margin-bottom: 8px;
         }
         @media (max-width: 860px) {
@@ -158,7 +157,7 @@ const PredictionResult = ({ prediction }) => {
         {/* FIX STEPS */}
         {prediction.rule_based_recommendations?.length > 0 && (
           <div className="pr-card" style={{ border: '1px solid rgba(34,211,238,0.15)' }}>
-            <p style={{ color: '#E2E8F0', fontWeight: 800, fontSize: 14, marginBottom: 14 }}>
+            <p style={{ color: '#0F4C81', fontWeight: 800, fontSize: 14, marginBottom: 14 }}>
               🔧 Steps to Fix Your Claim
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -166,11 +165,11 @@ const PredictionResult = ({ prediction }) => {
                 const isGood = rec.startsWith('✅ Everything');
                 return (
                   <div key={i} style={{
-                    background: isGood ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.04)',
-                    border: isGood ? '1px solid rgba(34,197,94,0.25)' : '1px solid rgba(255,255,255,0.08)',
+                    background: isGood ? 'rgba(16, 185, 129, 0.08)' : 'rgba(127, 29, 29, 0.05)',
+                    border: isGood ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(156, 163, 175, 0.2)',
                     borderRadius: 12, padding: '12px 16px',
                   }}>
-                    <p style={{ color: isGood ? '#4ADE80' : '#E2E8F0', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+                    <p style={{ color: isGood ? '#059669' : '#374151', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
                       {rec}
                     </p>
                   </div>
@@ -195,19 +194,19 @@ const PredictionResult = ({ prediction }) => {
         </div>
 
         {/* LEGEND */}
-        <div className="pr-card" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
-          <p style={{ color: '#E2E8F0', fontWeight: 700, fontSize: 13, marginBottom: 14 }}>💡 How to Read This Report</p>
+        <div className="pr-card" style={{ border: '1px solid rgba(15, 76, 129, 0.15)' }}>
+          <p style={{ color: '#0F4C81', fontWeight: 700, fontSize: 13, marginBottom: 14 }}>💡 How to Read This Report</p>
           <div className="pr-3col pr-legend-3col">
             {[
-              { icon: '✅', accent: '#4ADE80', bg: 'rgba(34,197,94,0.09)',   border: 'rgba(34,197,94,0.22)',   title: 'GREEN = Safe Claim',     sub: 'Low denial risk — ready to process.' },
-              { icon: '⚠️', accent: '#FCD34D', bg: 'rgba(245,158,11,0.09)', border: 'rgba(245,158,11,0.22)', title: 'YELLOW = Moderate Risk', sub: 'Review before submitting.' },
-              { icon: '🚨', accent: '#F87171', bg: 'rgba(239,68,68,0.09)',   border: 'rgba(239,68,68,0.22)',   title: 'RED = High Risk',        sub: 'Likely denial — needs attention.' },
+              { icon: '✅', accent: '#10b981', bg: 'rgba(16, 185, 129, 0.08)',   border: 'rgba(16, 185, 129, 0.2)',   title: 'GREEN = Safe Claim',     sub: 'Low denial risk — ready to process.' },
+              { icon: '⚠️', accent: '#f59e0b', bg: 'rgba(245, 158, 11, 0.08)', border: 'rgba(245, 158, 11, 0.2)', title: 'YELLOW = Moderate Risk', sub: 'Review before submitting.' },
+              { icon: '🚨', accent: '#ef4444', bg: 'rgba(239, 68, 68, 0.08)',   border: 'rgba(239, 68, 68, 0.2)',   title: 'RED = High Risk',        sub: 'Likely denial — needs attention.' },
             ].map(({ icon, accent, bg, border, title, sub }) => (
               <div key={title} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 12, padding: '13px', display: 'flex', alignItems: 'flex-start', gap: 10, minWidth: 0 }}>
                 <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>{icon}</span>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ color: accent, fontWeight: 700, fontSize: 12.5, marginBottom: 4 }}>{title}</p>
-                  <p style={{ color: '#64748B', fontSize: 11.5, lineHeight: 1.4 }}>{sub}</p>
+                  <p style={{ color: '#6b7280', fontSize: 11.5, lineHeight: 1.4 }}>{sub}</p>
                 </div>
               </div>
             ))}
@@ -216,12 +215,12 @@ const PredictionResult = ({ prediction }) => {
 
         {/* SHAP */}
         {prediction.shap_available && prediction.feature_contributions?.length > 0 && (
-          <div className="pr-card" style={{ border: '1px solid rgba(34,211,238,0.2)' }}>
+          <div className="pr-card" style={{ border: '1px solid rgba(15, 76, 129, 0.2)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 24, lineHeight: 1 }}>🧠</span>
               <div>
-                <h3 style={{ color: '#22D3EE', fontWeight: 800, fontSize: 'clamp(13px,1.8vw,15px)', marginBottom: 3 }}>AI Feature Impact</h3>
-                <p style={{ color: '#475569', fontSize: 11.5 }}>Powered by SHAP · Why the model predicted this</p>
+                <h3 style={{ color: '#0F4C81', fontWeight: 800, fontSize: 'clamp(13px,1.8vw,15px)', marginBottom: 3 }}>AI Feature Impact</h3>
+                <p style={{ color: '#6b7280', fontSize: 11.5 }}>Powered by SHAP · Why the model predicted this</p>
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -230,16 +229,16 @@ const PredictionResult = ({ prediction }) => {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7, gap: 8, flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flex: 1 }}>
                       <span style={{ fontSize: 15, flexShrink: 0 }}>{FEATURE_ICONS[item.feature] ?? '📊'}</span>
-                      <span style={{ color: '#CBD5E1', fontSize: 12.5, fontWeight: 600, textTransform: 'capitalize', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ color: '#374151', fontSize: 12.5, fontWeight: 600, textTransform: 'capitalize', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {item.feature.replace(/_/g, ' ')}
                       </span>
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 20, flexShrink: 0, background: item.contribution > 0 ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)', color: item.contribution > 0 ? '#F87171' : '#4ADE80' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 20, flexShrink: 0, background: item.contribution > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(16, 185, 129, 0.15)', color: item.contribution > 0 ? '#dc2626' : '#059669' }}>
                       {item.contribution > 0 ? '↑ +' : '↓ '}{(Math.abs(item.contribution) * 100).toFixed(2)}%
                     </span>
                   </div>
-                  <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 999, height: 8, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', borderRadius: 999, width: `${Math.min(Math.abs(item.contribution) * 1000, 100)}%`, background: item.contribution > 0 ? 'linear-gradient(90deg,#EF4444,#F97316)' : 'linear-gradient(90deg,#22C55E,#10B981)', transition: 'width 0.6s ease' }} />
+                  <div style={{ background: '#e5e7eb', borderRadius: 999, height: 8, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', borderRadius: 999, width: `${Math.min(Math.abs(item.contribution) * 1000, 100)}%`, background: item.contribution > 0 ? 'linear-gradient(90deg,#dc2626,#f97316)' : 'linear-gradient(90deg,#059669,#10b981)', transition: 'width 0.6s ease' }} />
                   </div>
                 </div>
               ))}

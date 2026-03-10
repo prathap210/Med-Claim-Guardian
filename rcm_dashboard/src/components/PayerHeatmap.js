@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 function PayerHeatmap() {
   const [heatmapData, setHeatmapData] = useState(null);
@@ -74,41 +74,41 @@ function PayerHeatmap() {
     return 'CRITICAL';
   };
 
-  if (loading) return <div className="text-cyan-400 text-center py-8">Loading heatmap...</div>;
-  if (error) return <div className="text-red-400 text-center py-8">{error}</div>;
-  if (!heatmapData) return <div className="text-gray-400 text-center py-8">No data available</div>;
+  if (loading) return <div className="text-blue-900 text-center py-8">Loading heatmap...</div>;
+  if (error) return <div className="text-red-600 text-center py-8">{error}</div>;
+  if (!heatmapData) return <div className="text-gray-600 text-center py-8">No data available</div>;
 
   return (
     <div className="space-y-6">
-      <div className="backdrop-premium p-8 rounded-2xl">
-        <h2 className="text-3xl font-bold text-cyan-400 mb-2">
+      <div className="bg-white border border-gray-200 p-8 rounded-2xl">
+        <h2 className="text-3xl font-bold text-blue-900 mb-2">
           🔥 Payer Risk Heatmap
         </h2>
-        <p className="text-gray-300 mb-6">
+        <p className="text-gray-700 mb-6">
           Visual matrix showing denial risk rates across payers and procedures
         </p>
 
         {/* Legend */}
         <div className="mb-8 flex flex-wrap gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-green-900 rounded"></div>
-            <span className="text-gray-300">Low (0-20%)</span>
+            <div className="w-6 h-6 bg-green-600 rounded"></div>
+            <span className="text-gray-700">Low (0-20%)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-lime-700 rounded"></div>
-            <span className="text-gray-300">Moderate (20-40%)</span>
+            <div className="w-6 h-6 bg-emerald-500 rounded"></div>
+            <span className="text-gray-700">Moderate (20-40%)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-yellow-600 rounded"></div>
-            <span className="text-gray-300">Medium (40-60%)</span>
+            <div className="w-6 h-6 bg-yellow-500 rounded"></div>
+            <span className="text-gray-700">Medium (40-60%)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-orange-600 rounded"></div>
-            <span className="text-gray-300">High (60-80%)</span>
+            <div className="w-6 h-6 bg-orange-500 rounded"></div>
+            <span className="text-gray-700">High (60-80%)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-red-700 rounded"></div>
-            <span className="text-gray-300">Critical (80-100%)</span>
+            <div className="w-6 h-6 bg-red-600 rounded"></div>
+            <span className="text-gray-700">Critical (80-100%)</span>
           </div>
         </div>
 
@@ -117,9 +117,9 @@ function PayerHeatmap() {
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                <th className="bg-gray-700 text-cyan-400 p-3 text-left font-bold">Payer / Procedure</th>
+                <th className="bg-blue-50 text-blue-900 p-3 text-left font-bold border border-gray-200">Payer / Procedure</th>
                 {heatmapData.procedures.map((proc, idx) => (
-                  <th key={idx} className="bg-gray-700 text-cyan-400 p-3 text-center font-bold min-w-32">
+                  <th key={idx} className="bg-blue-50 text-blue-900 p-3 text-center font-bold min-w-32 border border-gray-200">
                     {proc}
                   </th>
                 ))}
@@ -127,8 +127,8 @@ function PayerHeatmap() {
             </thead>
             <tbody>
               {heatmapData.payers.map((payer, payerIdx) => (
-                <tr key={payerIdx} className="border-t border-gray-600">
-                  <td className="bg-gray-700 text-cyan-300 p-3 font-bold">{payer}</td>
+                <tr key={payerIdx} className="border-t border-gray-200">
+                  <td className="bg-blue-50 text-blue-900 p-3 font-bold border border-gray-200">{payer}</td>
                   {heatmapData.matrix[payerIdx].map((value, procIdx) => (
                     <td
                       key={procIdx}
@@ -146,9 +146,9 @@ function PayerHeatmap() {
 
         {/* Key Insights */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-red-900/20 border border-red-500 p-4 rounded-lg">
-            <h4 className="text-red-300 font-bold mb-2">⚠️ Highest Risk Combinations</h4>
-            <ul className="text-gray-300 text-sm space-y-1">
+          <div className="bg-red-50 border border-red-300 p-4 rounded-lg">
+            <h4 className="text-red-800 font-bold mb-2">⚠️ Highest Risk Combinations</h4>
+            <ul className="text-gray-700 text-sm space-y-1">
               {heatmapData.matrix
                 .map((row, payerIdx) =>
                   row.map((value, procIdx) => ({
@@ -167,9 +167,9 @@ function PayerHeatmap() {
             </ul>
           </div>
 
-          <div className="bg-green-900/20 border border-green-500 p-4 rounded-lg">
-            <h4 className="text-green-300 font-bold mb-2">✅ Lowest Risk Combinations</h4>
-            <ul className="text-gray-300 text-sm space-y-1">
+          <div className="bg-green-50 border border-green-300 p-4 rounded-lg">
+            <h4 className="text-green-800 font-bold mb-2">✅ Lowest Risk Combinations</h4>
+            <ul className="text-gray-700 text-sm space-y-1">
               {heatmapData.matrix
                 .map((row, payerIdx) =>
                   row.map((value, procIdx) => ({

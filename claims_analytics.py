@@ -2,28 +2,44 @@ import pandas as pd
 import numpy as np
 import json
 import os
+import logging
 from datetime import datetime
+from typing import List, Dict, Any, Optional
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 class ClaimsAnalytics:
     """Analyze healthcare claims dataset and generate insights"""
     
-    def __init__(self, dataset_path='synthetic_healthcare_claims_dataset.csv'):
-        """Initialize with dataset"""
+    def __init__(self, dataset_path: str = 'synthetic_healthcare_claims_dataset.csv') -> None:
+        """Initialize with dataset
+        
+        Args:
+            dataset_path: Path to the CSV dataset file
+        """
         self.dataset_path = dataset_path
-        self.df = None
+        self.df: Optional[pd.DataFrame] = None
         self.load_data()
     
-    def load_data(self):
-        """Load the dataset"""
+    def load_data(self) -> None:
+        """Load the dataset from CSV file"""
         try:
             self.df = pd.read_csv(self.dataset_path)
-            print(f"[OK] Loaded dataset: {len(self.df)} records, {len(self.df.columns)} columns")
-        except FileNotFoundError:
-            print(f"[ERROR] Error: Dataset not found at {self.dataset_path}")
+            logger.info(f"Loaded dataset: {len(self.df)} records, {len(self.df.columns)} columns")
+        except FileNotFoundError as e:
+            logger.error(f"Dataset not found at {self.dataset_path}", exc_info=True)
             raise
     
-    def get_top_procedures_by_denial_rate(self, top_n=10):
-        """Get top N procedures with highest denial rate"""
+    def get_top_procedures_by_denial_rate(self, top_n: int = 10) -> List[Dict[str, Any]]:
+        """Get top N procedures with highest denial rate
+        
+        Args:
+            top_n: Number of top procedures to return
+            
+        Returns:
+            List of procedure statistics dictionaries
+        """
         procedure_stats = self.df.groupby('procedure_code').agg({
             'denial': ['sum', 'count', 'mean']
         }).round(4)
@@ -32,7 +48,7 @@ class ClaimsAnalytics:
         procedure_stats = procedure_stats.sort_values('denial_rate', ascending=False)
         procedure_stats = procedure_stats.head(top_n)
         
-        result = []
+        result: List[Dict[str, Any]] = []
         for idx, (procedure, row) in enumerate(procedure_stats.iterrows(), 1):
             result.append({
                 'rank': idx,
@@ -45,7 +61,7 @@ class ClaimsAnalytics:
         
         return result
     
-    def get_denial_rate_by_payer(self):
+    def get_denial_rate_by_payer(self) -> List[Dict[str, Any]]:
         """Get denial rate for each payer"""
         payer_stats = self.df.groupby('payer').agg({
             'denial': ['sum', 'count', 'mean']
@@ -70,8 +86,12 @@ class ClaimsAnalytics:
         
         return result
     
-    def get_denial_rate_by_provider_type(self):
-        """Get denial rate for each provider type"""
+    def get_denial_rate_by_provider_type(self) -> List[Dict[str, Any]]:
+        """Get denial rate for each provider type
+        
+        Returns:
+            List of provider type statistics dictionaries
+        """
         provider_stats = self.df.groupby('provider_type').agg({
             'denial': ['sum', 'count', 'mean']
         }).round(4)
@@ -80,7 +100,7 @@ class ClaimsAnalytics:
         provider_stats = provider_stats.sort_values('denial_rate', ascending=False)
         provider_stats = provider_stats.reset_index()
         
-        result = []
+        result: List[Dict[str, Any]] = []
         for _, row in provider_stats.iterrows():
             result.append({
                 'provider_type': row['provider_type'],

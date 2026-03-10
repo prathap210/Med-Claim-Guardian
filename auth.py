@@ -8,16 +8,25 @@ from datetime import datetime, timedelta
 from typing import Optional
 import jwt
 import os
+import logging
 from dotenv import load_dotenv
 from database import User, SessionLocal, AuditLog
 
 load_dotenv()
 
+# Configure logging
+logger = logging.getLogger(__name__)
+
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT configuration
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "fallback-secret-change-in-production")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "JWT_SECRET_KEY environment variable is required for security. "
+        "Please set it in your .env file or environment."
+    )
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 
@@ -53,7 +62,11 @@ def decode_token(token: str) -> Optional[dict]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
-    except jwt.InvalidTokenError:
+    except jwt.InvalidTokenError as e:
+        logger.warning(f"Invalid token attempt: {str(e)}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error decoding token: {str(e)}", exc_info=True)
         return None
 
 # ============================================================
@@ -66,6 +79,7 @@ def create_user(email: str, username: str, full_name: str, password: str) -> Opt
     try:
         # Check if user exists
         if db.query(User).filter((User.email == email) | (User.username == username)).first():
+            logger.info(f"User registration attempt with existing email/username: {email}, {username}")
             return None
         
         # Create user
@@ -87,9 +101,11 @@ def create_user(email: str, username: str, full_name: str, password: str) -> Opt
         )
         db.add(audit)
         db.commit()
+        logger.info(f"User registered successfully: {username} ({email})")
         return user
     except Exception as e:
         db.rollback()
+        logger.error(f"Error creating user {username}: {str(e)}", exc_info=True)
         return None
     finally:
         db.close()
@@ -103,9 +119,11 @@ def authenticate_user(username_or_email: str, password: str) -> Optional[User]:
         ).first()
         
         if not user:
+            logger.info(f"Login attempt for non-existent user: {username_or_email}")
             return None
         
         if not verify_password(password, user.password_hash):
+            logger.warning(f"Failed login attempt for user: {user.username}")
             return None
         
         # Log audit
@@ -116,8 +134,10 @@ def authenticate_user(username_or_email: str, password: str) -> Optional[User]:
         )
         db.add(audit)
         db.commit()
+        logger.info(f"User logged in successfully: {user.username}")
         return user
     except Exception as e:
+        logger.error(f"Error authenticating user {username_or_email}: {str(e)}", exc_info=True)
         return None
     finally:
         db.close()
