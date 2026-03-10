@@ -53,43 +53,25 @@ const FIELD_DESCRIPTIONS = {
   payer: 'Insurance payer company',
 };
 
+// Real-world coding accuracy: based on procedure-diagnosis compatibility
+// Matches how hospital billing software validates ICD/CPT code pairs
+const CODING_ACCURACY_MAP = {
+  'PROC_A': { 'DX1': 0.97, 'DX2': 0.91, 'DX3': 0.55, 'DX4': 0.42, 'DX5': 0.38 },
+  'PROC_B': { 'DX1': 0.48, 'DX2': 0.95, 'DX3': 0.93, 'DX4': 0.50, 'DX5': 0.41 },
+  'PROC_C': { 'DX1': 0.45, 'DX2': 0.52, 'DX3': 0.96, 'DX4': 0.92, 'DX5': 0.44 },
+  'PROC_D': { 'DX1': 0.40, 'DX2': 0.47, 'DX3': 0.53, 'DX4': 0.94, 'DX5': 0.90 },
+  'PROC_E': { 'DX1': 0.93, 'DX2': 0.44, 'DX3': 0.46, 'DX4': 0.51, 'DX5': 0.95 },
+};
+
+const calculateCodingAccuracy = (procedureCode, diagnosisCode, documentationComplete) => {
+  const base = (CODING_ACCURACY_MAP[procedureCode] || {})[ diagnosisCode] ?? 0.70;
+  const docPenalty = documentationComplete === 'no' ? 0.15 : 0;
+  return Math.max(0.10, parseFloat((base - docPenalty).toFixed(2)));
+};
+
 const ClaimForm = ({ onSubmit, onReset, isLoading }) => {
-  const [formData, setFormData] = useState({
-    patient_age: 45,
-    insurance_type: 'Private',
-    procedure_code: 'PROC_A',
-    diagnosis_code: 'DX1',
-    provider_type: 'Specialist',
-    claim_amount: 5000,
-    prior_authorization: 'yes',
-    documentation_complete: 'yes',
-    coding_accuracy_score: 0.95,
-    claim_submission_delay_days: 5,
-    payer: 'Star Health',
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    const numericFields = [
-      'patient_age',
-      'claim_amount',
-      'coding_accuracy_score',
-      'claim_submission_delay_days',
-    ];
-    
-    setFormData({
-      ...formData,
-      [name]: numericFields.includes(name) ? parseFloat(value) || value : value,
-    });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  const resetForm = () => {
-    setFormData({
+  const [formData, setFormData] = useState(() => {
+    const defaults = {
       patient_age: 45,
       insurance_type: 'Private',
       procedure_code: 'PROC_A',
@@ -98,9 +80,54 @@ const ClaimForm = ({ onSubmit, onReset, isLoading }) => {
       claim_amount: 5000,
       prior_authorization: 'yes',
       documentation_complete: 'yes',
-      coding_accuracy_score: 0.95,
       claim_submission_delay_days: 5,
       payer: 'Star Health',
+    };
+    return {
+      ...defaults,
+      coding_accuracy_score: calculateCodingAccuracy(defaults.procedure_code, defaults.diagnosis_code, defaults.documentation_complete),
+    };
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const numericFields = ['patient_age', 'claim_amount', 'claim_submission_delay_days'];
+    const updated = {
+      ...formData,
+      [name]: numericFields.includes(name) ? parseFloat(value) || value : value,
+    };
+    // Auto-recalculate coding accuracy when relevant fields change
+    if (['procedure_code', 'diagnosis_code', 'documentation_complete'].includes(name)) {
+      updated.coding_accuracy_score = calculateCodingAccuracy(
+        updated.procedure_code,
+        updated.diagnosis_code,
+        updated.documentation_complete
+      );
+    }
+    setFormData(updated);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  const resetForm = () => {
+    const defaults = {
+      patient_age: 45,
+      insurance_type: 'Private',
+      procedure_code: 'PROC_A',
+      diagnosis_code: 'DX1',
+      provider_type: 'Specialist',
+      claim_amount: 5000,
+      prior_authorization: 'yes',
+      documentation_complete: 'yes',
+      claim_submission_delay_days: 5,
+      payer: 'Star Health',
+    };
+    setFormData({
+      ...defaults,
+      coding_accuracy_score: calculateCodingAccuracy(defaults.procedure_code, defaults.diagnosis_code, defaults.documentation_complete),
     });
     if (onReset) onReset();
   };
@@ -277,28 +304,39 @@ const ClaimForm = ({ onSubmit, onReset, isLoading }) => {
         </select>
       </div>
 
-      {/* Coding Accuracy Score */}
+      {/* Coding Accuracy Score — Auto-calculated, not editable */}
       <div className="group">
-        <label className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-2 hover:text-cyan-300 transition-colors">
+        <label className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-2">
           <span className="text-xl">{FIELD_ICONS.coding_accuracy_score}</span>
           Coding Accuracy Score
+          <span className="ml-auto text-xs font-normal px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Auto-calculated</span>
         </label>
-        <p className="text-xs text-white/60 mb-3">{FIELD_DESCRIPTIONS.coding_accuracy_score}</p>
-        <div className="flex items-center space-x-3">
-          <input
-            type="range"
-            name="coding_accuracy_score"
-            min="0"
-            max="1"
-            step="0.01"
-            value={formData.coding_accuracy_score}
-            onChange={handleChange}
-            className="flex-1 h-2 backdrop-blur-xl bg-white/20 rounded-lg appearance-none cursor-pointer accent-cyan-400"
-          />
-          <div className="px-4 py-2 backdrop-blur-xl bg-gradient-to-r from-cyan-500/30 to-blue-500/30 border border-cyan-400/50 rounded-lg text-white font-bold text-center w-16">
+        <p className="text-xs text-white/60 mb-3">Automatically determined by procedure–diagnosis code compatibility</p>
+        <div className="flex items-center gap-3 px-4 py-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-lg cursor-not-allowed">
+          <div className="flex-1 h-2 rounded-full bg-white/10 relative overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${(formData.coding_accuracy_score * 100).toFixed(0)}%`,
+                background: formData.coding_accuracy_score >= 0.85
+                  ? 'linear-gradient(to right, #22d3ee, #3b82f6)'
+                  : formData.coding_accuracy_score >= 0.60
+                  ? 'linear-gradient(to right, #f59e0b, #f97316)'
+                  : 'linear-gradient(to right, #f87171, #ef4444)',
+              }}
+            />
+          </div>
+          <div className={`px-4 py-2 rounded-lg font-bold text-center w-16 border ${
+            formData.coding_accuracy_score >= 0.85
+              ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-300'
+              : formData.coding_accuracy_score >= 0.60
+              ? 'bg-amber-500/20 border-amber-400/50 text-amber-300'
+              : 'bg-red-500/20 border-red-400/50 text-red-300'
+          }`}>
             {(formData.coding_accuracy_score * 100).toFixed(0)}%
           </div>
         </div>
+        <p className="text-xs mt-1.5 text-white/40">Changes when you select different Procedure or Diagnosis codes</p>
       </div>
 
       {/* Submission Delay */}
