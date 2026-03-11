@@ -36,6 +36,10 @@ body {
     animation: none;
     background-position: 50% 50%;
   }
+  
+  .spinner {
+    animation: none;
+  }
 }
 
 .container {
@@ -73,6 +77,7 @@ body {
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
 }
