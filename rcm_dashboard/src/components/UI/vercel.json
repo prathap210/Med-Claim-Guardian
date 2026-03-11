@@ -1,0 +1,8 @@
+{
+  "buildCommand": "cd rcm_dashboard && npm install && npm run build",
+  "outputDirectory": "rcm_dashboard/build",
+  "env": {
+    "REACT_APP_API_URL": "@react_app_api_url"
+  }
+}
+}
