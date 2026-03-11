@@ -1,4 +1,4 @@
 {
-  "buildCommand": "pip install -r requirements.txt && cd rcm_dashboard && npm install && npm run build",
+  "buildCommand": "pip install -r requirements.txt",
   "startCommand": "uvicorn claim_denial_api:app --host 0.0.0.0 --port $PORT"
 }

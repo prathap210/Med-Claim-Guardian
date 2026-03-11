@@ -103,8 +103,44 @@ try:
 except ImportError:
     logger.warning("OAuth module not available - social login will not work")
 
-# Serve React frontend static files
+# Serve React frontend static files or fallback HTML
 BUILD_DIR = os.path.join(BASE_DIR, 'rcm_dashboard', 'build')
+
+FALLBACK_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Claim Denial Prediction API</title>
+    <style>
+        body { font-family: Arial; margin: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .container { max-width: 800px; margin: 0 auto; background: rgba(0,0,0,0.3); padding: 40px; border-radius: 10px; }
+        h1 { text-align: center; }
+        .status { background: rgba(0,255,0,0.2); padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .endpoint { background: rgba(255,255,255,0.1); padding: 10px; margin: 10px 0; font-family: monospace; border-radius: 5px; }
+        a { color: #87CEEB; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Claim Denial Prediction API is Running</h1>
+        <div class="status">
+            <strong>Status:</strong> API Server Active<br>
+            <strong>Environment:</strong> Production
+        </div>
+        <h2>Available Endpoints:</h2>
+        <div class="endpoint">📊 <a href="/docs">API Documentation (Swagger UI)</a></div>
+        <div class="endpoint">🔍 <a href="/docs#/default/predict_claim_denial_predict_post">Make Predictions</a></div>
+        <div class="endpoint">📈 <a href="/model-info">Model Information</a></div>
+        <h2>Quick Start:</h2>
+        <p>1. Visit <a href="/docs">/docs</a> to see all available endpoints</p>
+        <p>2. Use POST /predict to make healthcare claim denial predictions</p>
+        <p>3. React frontend coming soon...</p>
+    </div>
+</body>
+</html>
+"""
+
 if os.path.exists(BUILD_DIR):
     app.mount("/assets", StaticFiles(directory=os.path.join(BUILD_DIR, 'assets')), name="assets")
     
@@ -119,9 +155,14 @@ if os.path.exists(BUILD_DIR):
         if os.path.exists(index_path):
             with open(index_path, 'r') as f:
                 return f.read()
-        return {"detail": "Frontend build not found"}, 404
+        return FALLBACK_HTML, 200
 else:
-    logger.warning(f"React build directory not found at {BUILD_DIR} - Frontend will not be served")
+    logger.warning(f"React build directory not found at {BUILD_DIR} - Will serve fallback HTML")
+    
+    @app.get("/", response_class=HTMLResponse)
+    async def serve_fallback():
+        """Serve fallback HTML when React build doesn't exist"""
+        return FALLBACK_HTML
 
 # Load the trained model and label encoders
 MODEL_PATH = os.path.join(BASE_DIR, 'denial_model.pkl')
