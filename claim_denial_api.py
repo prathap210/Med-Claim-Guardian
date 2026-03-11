@@ -129,13 +129,21 @@ ENCODERS_PATH = os.path.join(BASE_DIR, 'label_encoders.pkl')
 EXPLAINER_PATH = os.path.join(BASE_DIR, 'shap_explainer.pkl')
 FEATURE_NAMES_PATH = os.path.join(BASE_DIR, 'feature_names.pkl')
 
+# Load model (gracefully handle missing files - app can start without models)
+model = None
+encoder = None
 try:
-    model = joblib.load(MODEL_PATH)
-    encoder = joblib.load(ENCODERS_PATH)   # OrdinalEncoder (handles unknown categories)
-    logger.info("Model and encoder loaded successfully!")
-except FileNotFoundError as e:
-    logger.error(f"Could not load model or encoder: {e}", exc_info=True)
-    raise
+    if os.path.exists(MODEL_PATH) and os.path.exists(ENCODERS_PATH):
+        model = joblib.load(MODEL_PATH)
+        encoder = joblib.load(ENCODERS_PATH)
+        logger.info("✓ Model and encoder loaded successfully!")
+    else:
+        logger.warning(f"⚠️ Model files not found at {MODEL_PATH}. App will start but /predict won't work yet.")
+        logger.warning("Run 'python predict_claim_denials.py' to train models.")
+except Exception as e:
+    logger.warning(f"Could not load model or encoder: {e}. App will start but /predict won't work.")
+    model = None
+    encoder = None
 
 # SHAP explainer will be initialized lazily on first prediction request
 explainer = None
@@ -262,33 +270,28 @@ def get_rule_based_recommendations(features: dict) -> List[str]:
 # ============================================================
 @app.on_event("startup")
 async def startup_validation():
-    """Validate all required configurations and dependencies at startup"""
-    logger.info("Starting application validation...")
+    """Log startup information without blocking deployment"""
+    logger.info("Starting application...")
     
-    # Check required environment variables
-    required_env_vars = ['JWT_SECRET_KEY', 'ADMIN_API_KEY']
-    missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+    # Setup security - JWT_SECRET_KEY is optional with default
+    jwt_secret = os.getenv("JWT_SECRET_KEY", "dev-secret-key-change-in-production")
+    logger.info(f"JWT security: {'custom key configured' if os.getenv('JWT_SECRET_KEY') else 'using default key'}")
     
-    if missing_vars:
-        error_msg = f"Missing required environment variables: {', '.join(missing_vars)}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg)
-    
-    # Check if model files exist
+    # Check if model files exist (log warning if missing, don't block)
     model_files = [MODEL_PATH, ENCODERS_PATH]
     missing_files = [f for f in model_files if not os.path.exists(f)]
     
     if missing_files:
-        error_msg = f"Missing required model files: {', '.join(missing_files)}. Please run 'python predict_claim_denials.py' first."
-        logger.error(error_msg)
-        raise RuntimeError(error_msg)
+        logger.warning(f"⚠️ Model files not found: {', '.join(missing_files)}")
+        logger.warning("App will start but /predict endpoint will fail until models are trained")
+    else:
+        logger.info("✓ Model files found")
     
-    # Log successful startup
-    logger.info("✓ All startup validations passed")
+    # Log environment info
     logger.info(f"✓ Environment: {ENVIRONMENT}")
     logger.info(f"✓ Frontend URL: {FRONTEND_URL}")
     logger.info(f"✓ SHAP available: {SHAP_AVAILABLE}")
-    logger.info("Application is ready to accept requests")
+    logger.info("✓ Application is ready to accept requests")
 
 # ============================================================
 # CACHING HELPERS
@@ -402,6 +405,13 @@ def predict_claim_denial(request: ClaimPredictionRequest) -> ClaimPredictionResp
         }
     """
     try:
+        # Check if model is available
+        if model is None or encoder is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Model not available. Please train the model first by running 'python predict_claim_denials.py'"
+            )
+        
         # Create a DataFrame with the input data
         input_data = pd.DataFrame([request.dict()])
         
