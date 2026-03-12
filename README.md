@@ -2,6 +2,16 @@
 
 **An AI-powered platform that predicts and prevents healthcare insurance claim denials BEFORE submission.**
 
+## 🚀 Live Deployment
+
+| | URL |
+|---|---|
+| **Frontend** | https://med-claim-guardian-oljk.vercel.app |
+| **Backend API** | https://med-claim-guardian-95py.onrender.com |
+| **API Docs** | https://med-claim-guardian-95py.onrender.com/docs |
+
+> Note: Backend is hosted on Render free tier — first request after inactivity may take ~30 seconds to wake up.
+
 ---
 
 ## 🎯 Problem Statement
