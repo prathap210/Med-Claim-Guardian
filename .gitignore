@@ -16,7 +16,6 @@ env/
 
 # Large ML artifacts not needed at runtime
 shap_explainer.pkl
-synthetic_healthcare_claims_dataset.csv
 
 # IDE config
 .vscode/
