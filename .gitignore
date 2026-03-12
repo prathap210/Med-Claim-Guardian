@@ -14,8 +14,18 @@ build/
 venv/
 env/
 
-# ML model artifacts - included so deployed server can run without retraining
-# *.pkl
+# Large ML artifacts not needed at runtime
+shap_explainer.pkl
+synthetic_healthcare_claims_dataset.csv
+
+# IDE config
+.vscode/
+
+# Root package-lock (frontend lock is inside rcm_dashboard/)
+package-lock.json
+
+# Render env secrets
+render.env
 
 # Database files
 *.db
