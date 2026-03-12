@@ -139,7 +139,7 @@ function App() {
         });
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to get prediction. Make sure the API is running at http://localhost:8000');
+      setError(err.response?.data?.detail || `Failed to get prediction. Make sure the API is running at ${API_URL}`);
       setPrediction(null);
     } finally {
       setLoading(false);
