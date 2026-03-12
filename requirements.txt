@@ -5,11 +5,9 @@ scikit-learn==1.5.2
 pandas==2.2.3
 joblib==1.4.2
 numpy==2.0.2
-imbalanced-learn==0.12.4
 python-dotenv==1.0.0
 slowapi==0.1.9
 PyMySQL==1.1.0
-shap==0.46.0
 passlib==1.7.4
 bcrypt==3.2.2
 PyJWT==2.8.0
