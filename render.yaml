@@ -7,6 +7,8 @@ services:
     buildCommand: pip install --upgrade pip && pip install --prefer-binary --retries 5 --timeout 120 -r requirements.txt
     startCommand: uvicorn claim_denial_api:app --host 0.0.0.0 --port $PORT
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
       - key: ENVIRONMENT
         value: production
       - key: PORT
